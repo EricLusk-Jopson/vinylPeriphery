@@ -66,7 +66,9 @@ function App() {
       if (
         !extraArtist.role.includes("Management") &&
         !extraArtist.role.includes("Photo") &&
-        !extraArtist.role.includes("Translated")
+        !extraArtist.role.includes("Translated") &&
+        !extraArtist.role.includes("Art") &&
+        !extraArtist.role.includes("Master")
       ) {
         contributors.add(extraArtist.id);
         contributorInfo.set(extraArtist.id, {
@@ -172,7 +174,12 @@ function App() {
 
   useEffect(() => {
     const filteredResults = excludeArtist
-      ? results.filter((res) => res[1].artist !== seedRelease.artists_sort)
+      ? results.filter((res) => {
+          return (
+            res[1].artist !== seedRelease.artists_sort &&
+            !seedRelease.artists.some((artist) => artist.name === res[1].artist)
+          );
+        })
       : results;
     setDisplayResults(filteredResults);
     console.log(excludeArtist);
