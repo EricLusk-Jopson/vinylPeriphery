@@ -47,25 +47,36 @@ function App() {
     const output = {
       results: [],
       pagination: [],
+      roles: [],
     };
     await Promise.all(
-      artists.map(async (artist) => {
-        console.log("looking at page " + currentPage + "for " + artist.name);
+      [...artists.values()].map(async (artist) => {
+        console.log(artist);
+        console.log(artist.id);
+        console.log(artist.roles);
+        console.log("looking at page " + currentPage + " for " + artist.name);
         const artistReleases = await fetch(
-          artist.releases_url + `?page=1&per_page=100`
+          `https://api.discogs.com/artists/${artist.id}/releases?page=1&per_page=100`
         )
           .then((res) => res.json())
-          .catch((err) => console.log(err.json()));
+          .catch((err) => console.log(err));
 
-        if (artistReleases.releases && artistReleases.pagination) {
+        console.log(artistReleases);
+        if (
+          artistReleases &&
+          artistReleases.releases &&
+          artistReleases.pagination
+        ) {
           output.pagination.push({
             prev: artistReleases.pagination.urls?.prev,
             next: artistReleases.pagination.urls?.next,
           });
-          output.results.push(...artistReleases.releases);
+          output.results.push(artistReleases.releases);
+          output.roles.push(artist.roles);
         }
       })
     );
+    console.log(output);
     return output;
   };
 
@@ -92,22 +103,63 @@ function App() {
     console.log(artists);
 
     // for each artist get any members
-    const members = await Promise.all(
+    const allMembers = [];
+
+    await Promise.all(
       artists.map(async (artist) => {
         if (artist.hasOwnProperty("members")) {
           console.log(`${artist.name} has members`);
           return await Promise.all(
             artist.members.map(async (member) => {
-              return await fetch(member.resource_url).then((res) => res.json());
+              const response = await fetch(member.resource_url).then((res) =>
+                res.json()
+              );
+              allMembers.push(response);
             })
           );
         } else {
           console.log(`${artist.name} has NO members`);
-          return artist;
+          allMembers.push(artist);
         }
       })
     );
-    console.log(members);
+    console.log(allMembers);
+
+    // for each artist, return their releases
+    const output = {
+      results: [],
+      pagination: [],
+      roles: [],
+    };
+    await Promise.all(
+      [...allMembers.values()].map(async (member) => {
+        console.log(member);
+        console.log(member.id);
+        console.log(member.roles);
+        console.log("looking at page " + currentPage + "for " + member.name);
+        const memberReleases = await fetch(
+          `https://api.discogs.com/artists/${member.id}/releases?page=1&per_page=100`
+        )
+          .then((res) => res.json())
+          .catch((err) => console.log(err));
+
+        console.log(memberReleases);
+        if (
+          memberReleases &&
+          memberReleases.releases &&
+          memberReleases.pagination
+        ) {
+          output.pagination.push({
+            prev: memberReleases.pagination.urls?.prev,
+            next: memberReleases.pagination.urls?.next,
+          });
+          output.results.push(memberReleases.releases);
+          output.roles.push(member.roles);
+        }
+      })
+    );
+    console.log(output);
+    return output;
   };
 
   const albumContributorReleases = async (band, album) => {
@@ -167,31 +219,35 @@ function App() {
     };
     await Promise.all(
       [...contributors.values()].map(async (contributor) => {
+        console.log(contributor);
         console.log(contributor.id);
+        console.log(contributor.roles);
         console.log(
           "looking at page " + currentPage + "for " + contributor.name
         );
         const contributorReleases = await fetch(
           `https://api.discogs.com/artists/${contributor.id}/releases?page=1&per_page=100`
         )
-          .then((res) => {
-            res.json();
-          })
+          .then((res) => res.json())
           .catch((err) => console.log(err));
 
         console.log(contributorReleases);
-        // if (contributorReleases.releases && contributorReleases.pagination) {
-        //   output.pagination.push({
-        //     prev: contributorReleases.pagination.urls?.prev,
-        //     next: contributorReleases.pagination.urls?.next,
-        //   });
-        //   output.results.push(...contributorReleases.releases);
-        //   output.results.push(...contributor.roles);
-        // }
+        if (
+          contributorReleases &&
+          contributorReleases.releases &&
+          contributorReleases.pagination
+        ) {
+          output.pagination.push({
+            prev: contributorReleases.pagination.urls?.prev,
+            next: contributorReleases.pagination.urls?.next,
+          });
+          output.results.push(contributorReleases.releases);
+          output.roles.push(contributor.roles);
+        }
       })
     );
     console.log(output);
-    // return output;
+    return output;
   };
 
   const loadMore = async (relation) => {
