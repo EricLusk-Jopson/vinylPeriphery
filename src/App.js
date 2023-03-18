@@ -24,26 +24,39 @@ function App() {
   };
 
   const bandReleases = async () => {
-    console.log("searching for band...");
+    // searching with input params
     const response = await getSearchResult();
     console.log(response);
     console.log(response.results);
+
+    // fetch the release information for the first result
     const release = await fetch(response.results[0].resource_url).then((res) =>
       res.json()
     );
     console.log(release);
+
+    // fetch the list of artists
     const artists = await Promise.all(
       release.artists.map(async (artist) => {
         return await fetch(artist.resource_url).then((res) => res.json());
       })
     );
     console.log(artists);
-    const artistReleases = await Promise.all(
+
+    // for each artist, return their releases
+
+    const results = [];
+    await Promise.all(
       artists.map(async (artist) => {
-        return await fetch(artist.releases_url).then((res) => res.json());
+        const artistReleases = await fetch(artist.releases_url).then((res) =>
+          res.json()
+        );
+        // console.log(...artistReleases.releases);
+        results.push(...artistReleases.releases);
       })
     );
-    console.log(artistReleases);
+    console.log(results);
+    return results;
   };
 
   const memberReleases = async (band) => {
@@ -215,18 +228,28 @@ function App() {
     getInfo(band, album);
   };
 
+  const getBandReleases = async () => {
+    const releases = await bandReleases();
+    console.log(releases);
+    setResults(releases.sort((a, b) => b.id - a.id));
+  };
+
   useEffect(() => {
-    const filteredResults = excludeArtist
-      ? results.filter((res) => {
-          return (
-            res[1].artist !== seedRelease.artists_sort &&
-            !seedRelease.artists.some((artist) => artist.name === res[1].artist)
-          );
-        })
-      : results;
-    setDisplayResults(filteredResults);
-    console.log(excludeArtist);
-  }, [results, excludeArtist]);
+    console.log(results);
+  }, [results]);
+
+  // useEffect(() => {
+  //   const filteredResults = excludeArtist
+  //     ? results.filter((res) => {
+  //         return (
+  //           res[1].artist !== seedRelease.artists_sort &&
+  //           !seedRelease.artists.some((artist) => artist.name === res[1].artist)
+  //         );
+  //       })
+  //     : results;
+  //   setDisplayResults(filteredResults);
+  //   console.log(excludeArtist);
+  // }, [results, excludeArtist]);
 
   return (
     <div className="App">
@@ -255,10 +278,19 @@ function App() {
         checked={excludeArtist}
         onChange={toggleArtistExclusion}
       ></input>
-      <button onClick={bandReleases}>artist</button>
+      <button onClick={getBandReleases}>artist</button>
       <button onClick={memberReleases}>members</button>
       <button onClick={albumContributorReleases}>contributors</button>
       <div>
+        {results.map((result) => (
+          <>
+            <p>
+              {result.artist} - {result.title}
+            </p>
+          </>
+        ))}
+      </div>
+      {/* <div>
         {displayResults.map((result) => (
           <>
             <span></span>
@@ -270,7 +302,7 @@ function App() {
             </p>
           </>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
