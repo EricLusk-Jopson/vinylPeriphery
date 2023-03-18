@@ -11,15 +11,46 @@ function App() {
   });
   const { band, album } = formData;
 
-  const bandReleases = (band) => {
+  const consumer_key = "owJjvljKmrcdSbXFVPTu";
+  const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
+  const search_url = "https://api.discogs.com/database/search?";
+
+  // console.log(process.env.SEARCH_URL);
+
+  const getSearchResult = async () => {
+    return await fetch(
+      `https://api.discogs.com/database/search?release_title=${album}&artist=${band}&type=release&sort=year&sort_order=asc&key=owJjvljKmrcdSbXFVPTu&secret=wgJurrmQFbROAyrmByuLrZMRMhDznPaK`
+    ).then((res) => res.json());
+  };
+
+  const bandReleases = async () => {
+    console.log("searching for band...");
+    const response = await getSearchResult();
+    console.log(response);
+    console.log(response.results);
+    const release = await fetch(response.results[0].resource_url).then((res) =>
+      res.json()
+    );
+    console.log(release);
+    const artists = await Promise.all(
+      release.artists.map(async (artist) => {
+        return await fetch(artist.resource_url).then((res) => res.json());
+      })
+    );
+    console.log(artists);
+    const artistReleases = await Promise.all(
+      artists.map(async (artist) => {
+        return await fetch(artist.releases_url).then((res) => res.json());
+      })
+    );
+    console.log(artistReleases);
+  };
+
+  const memberReleases = async (band) => {
     console.log("searching for band...");
   };
 
-  const memberReleases = (band) => {
-    console.log("searching for band...");
-  };
-
-  const albumContributorReleases = (band, album) => {
+  const albumContributorReleases = async (band, album) => {
     console.log("searching for album...");
   };
 
@@ -224,6 +255,9 @@ function App() {
         checked={excludeArtist}
         onChange={toggleArtistExclusion}
       ></input>
+      <button onClick={bandReleases}>artist</button>
+      <button onClick={memberReleases}>members</button>
+      <button onClick={albumContributorReleases}>contributors</button>
       <div>
         {displayResults.map((result) => (
           <>
