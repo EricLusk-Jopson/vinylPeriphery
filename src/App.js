@@ -1,8 +1,8 @@
 import { useState, useEffect, React } from "react";
 
 function App() {
-  const [results, setResults] = useState([]);
-  const [seedRelease, setSeedRelease] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [data, setData] = useState([]);
   const [displayResults, setDisplayResults] = useState([]);
   const [excludeArtist, setExcludeArtist] = useState(true);
   const [formData, setFormData] = useState({
@@ -44,19 +44,32 @@ function App() {
     console.log(artists);
 
     // for each artist, return their releases
-
-    const results = [];
+    const output = {
+      results: [],
+      pagination: [],
+    };
     await Promise.all(
       artists.map(async (artist) => {
-        const artistReleases = await fetch(artist.releases_url).then((res) =>
-          res.json()
-        );
+        console.log("looking at page " + currentPage + "for " + artist.name);
+        const artistReleases = await fetch(
+          artist.releases_url + `?page=1&per_page=100`
+        )
+          .then((res) => res.json())
+          .catch((err) => console.log(err.json()));
         // console.log(...artistReleases.releases);
-        results.push(...artistReleases.releases);
+        console.log(artistReleases);
+
+        if (artistReleases.releases && artistReleases.pagination) {
+          output.pagination.push({
+            prev: artistReleases.pagination.urls?.prev,
+            next: artistReleases.pagination.urls?.next,
+          });
+          output.results.push(...artistReleases.releases);
+        }
       })
     );
-    console.log(results);
-    return results;
+    console.log(output);
+    return output;
   };
 
   const memberReleases = async (band) => {
@@ -65,6 +78,38 @@ function App() {
 
   const albumContributorReleases = async (band, album) => {
     console.log("searching for album...");
+  };
+
+  const loadMore = async (relation) => {
+    const searchURLs = [];
+    const output = {
+      results: [],
+      pagination: [],
+    };
+
+    data.pagination.forEach((links) => {
+      console.log(links[relation]);
+      if (links[relation] !== undefined) {
+        searchURLs.push(links[relation]);
+      }
+    });
+
+    await Promise.all(
+      searchURLs.map(async (link) => {
+        const artistReleases = await fetch(link)
+          .then((res) => res.json())
+          .catch((err) => console.log(err.json()));
+
+        if (artistReleases.releases && artistReleases.pagination) {
+          output.pagination.push({
+            prev: artistReleases.pagination.urls?.prev,
+            next: artistReleases.pagination.urls?.next,
+          });
+          output.results.push(...artistReleases.releases);
+        }
+      })
+    );
+    return output;
   };
 
   const getInfo = async (band, album) => {
@@ -207,8 +252,8 @@ function App() {
     );
     console.log(sortedResults);
     console.log([...sortedResults.entries()]);
-    setSeedRelease(release);
-    setResults([...sortedResults.entries()]);
+    // setSeedRelease(release);
+    // setResults([...sortedResults.entries()]);
   };
 
   const onChange = (e) => {
@@ -231,12 +276,41 @@ function App() {
   const getBandReleases = async () => {
     const releases = await bandReleases();
     console.log(releases);
-    setResults(releases.sort((a, b) => b.id - a.id));
+    setData(releases);
+    // setResults(releases.sort((a, b) => b.id - a.id));
+    // setResults(
+    //   releases.sort((a, b) => {
+    //     if (a.title < b.title) {
+    //       return -1;
+    //     }
+    //     if (a.title > b.title) {
+    //       return 1;
+    //     }
+    //     return 0;
+    //   })
+    // );
+  };
+
+  const loadLast = async () => {
+    const moreReleases = await loadMore("prev");
+    console.log(moreReleases);
+    setData(moreReleases);
+  };
+
+  const loadNext = async () => {
+    const moreReleases = await loadMore("next");
+    console.log(moreReleases);
+    setData(moreReleases);
   };
 
   useEffect(() => {
-    console.log(results);
-  }, [results]);
+    console.log(data);
+    console.log(currentPage);
+  }, [data]);
+
+  useEffect(() => {
+    console.log(currentPage);
+  }, [currentPage]);
 
   // useEffect(() => {
   //   const filteredResults = excludeArtist
@@ -282,14 +356,27 @@ function App() {
       <button onClick={memberReleases}>members</button>
       <button onClick={albumContributorReleases}>contributors</button>
       <div>
-        {results.map((result) => (
-          <>
-            <p>
-              {result.artist} - {result.title}
-            </p>
-          </>
-        ))}
+        {data.results &&
+          data.results.map((result) => (
+            <>
+              <p>
+                {result.artist} - {result.title}
+              </p>
+            </>
+          ))}
       </div>
+      <button
+        disabled={data.pagination.every((link) => link.prev === undefined)}
+        onClick={loadLast}
+      >
+        Load Last Page
+      </button>
+      <button
+        disabled={data.pagination.every((link) => link.next === undefined)}
+        onClick={loadNext}
+      >
+        Load Next Page
+      </button>
       {/* <div>
         {displayResults.map((result) => (
           <>
