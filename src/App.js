@@ -11,6 +11,18 @@ function App() {
   });
   const { band, album } = formData;
 
+  const bandReleases = (band) => {
+    console.log("searching for band...");
+  };
+
+  const memberReleases = (band) => {
+    console.log("searching for band...");
+  };
+
+  const albumContributorReleases = (band, album) => {
+    console.log("searching for album...");
+  };
+
   const getInfo = async (band, album) => {
     // return the search results
     console.log("searching for album");
