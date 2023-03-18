@@ -56,8 +56,6 @@ function App() {
         )
           .then((res) => res.json())
           .catch((err) => console.log(err.json()));
-        // console.log(...artistReleases.releases);
-        console.log(artistReleases);
 
         if (artistReleases.releases && artistReleases.pagination) {
           output.pagination.push({
@@ -68,16 +66,132 @@ function App() {
         }
       })
     );
-    console.log(output);
     return output;
   };
 
   const memberReleases = async (band) => {
     console.log("searching for band...");
+
+    // searching with input params
+    const response = await getSearchResult();
+    console.log(response);
+    console.log(response.results);
+
+    // fetch the release information for the first result
+    const release = await fetch(response.results[0].resource_url).then((res) =>
+      res.json()
+    );
+    console.log(release);
+
+    // fetch the list of artists
+    const artists = await Promise.all(
+      release.artists.map(async (artist) => {
+        return await fetch(artist.resource_url).then((res) => res.json());
+      })
+    );
+    console.log(artists);
+
+    // for each artist get any members
+    const members = await Promise.all(
+      artists.map(async (artist) => {
+        if (artist.hasOwnProperty("members")) {
+          console.log(`${artist.name} has members`);
+          return await Promise.all(
+            artist.members.map(async (member) => {
+              return await fetch(member.resource_url).then((res) => res.json());
+            })
+          );
+        } else {
+          console.log(`${artist.name} has NO members`);
+          return artist;
+        }
+      })
+    );
+    console.log(members);
   };
 
   const albumContributorReleases = async (band, album) => {
     console.log("searching for album...");
+    // searching with input params
+    const response = await getSearchResult();
+    console.log(response);
+    console.log(response.results);
+
+    // fetch the release information for the first result that has an extra artists
+    let release;
+    for (let i = 0; i < 5; i++) {
+      const nextRelease = await fetch(response.results[i].resource_url).then(
+        (res) => res.json()
+      );
+      console.log(i, nextRelease);
+      if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+        release = nextRelease;
+        break;
+      }
+      release = nextRelease;
+    }
+    console.log(release);
+    console.log(release.extraartists);
+
+    // form a collection of relevant contributors and their roles
+    const contributors = new Map();
+    release.extraartists.forEach((extraArtist) => {
+      if (
+        !extraArtist.role.includes("Management") &&
+        !extraArtist.role.includes("Photo") &&
+        !extraArtist.role.includes("Translated") &&
+        !extraArtist.role.includes("Art") &&
+        !extraArtist.role.includes("Master")
+      ) {
+        const oldRoles = contributors.has(extraArtist.id)
+          ? [...contributors.get(extraArtist.id).roles]
+          : [];
+        const newRoles = extraArtist.role
+          .split(",")
+          .map((element) => element.trim());
+        contributors.set(extraArtist.id, {
+          id: extraArtist.id,
+          name: extraArtist.name,
+          link: extraArtist.resource_url,
+          roles: [...oldRoles, ...newRoles],
+        });
+      }
+    });
+    console.log(contributors);
+
+    // for each artist, return their releases
+    const output = {
+      results: [],
+      pagination: [],
+      roles: [],
+    };
+    await Promise.all(
+      [...contributors.values()].map(async (contributor) => {
+        console.log(contributor.id);
+        console.log(
+          "looking at page " + currentPage + "for " + contributor.name
+        );
+        const contributorReleases = await fetch(
+          `https://api.discogs.com/artists/${contributor.id}/releases?page=1&per_page=100`
+        )
+          .then((res) => {
+            res.json();
+          })
+          .catch((err) => console.log(err));
+
+        console.log(contributorReleases);
+        // if (contributorReleases.releases && contributorReleases.pagination) {
+        //   output.pagination.push({
+        //     prev: contributorReleases.pagination.urls?.prev,
+        //     next: contributorReleases.pagination.urls?.next,
+        //   });
+        //   output.results.push(...contributorReleases.releases);
+        //   output.results.push(...contributor.roles);
+        // }
+      })
+    );
+    console.log(output);
+    // return output;
   };
 
   const loadMore = async (relation) => {
