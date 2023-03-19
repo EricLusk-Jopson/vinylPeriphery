@@ -1,8 +1,7 @@
 import { useState, useEffect, React } from "react";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState([]);
+  const [data, setData] = useState({ pagination: [], results: [], roles: [] });
   const [displayResults, setDisplayResults] = useState([]);
   const [excludeArtist, setExcludeArtist] = useState(true);
   const [formData, setFormData] = useState({
@@ -54,7 +53,6 @@ function App() {
         console.log(artist);
         console.log(artist.id);
         console.log(artist.roles);
-        console.log("looking at page " + currentPage + " for " + artist.name);
         const artistReleases = await fetch(
           `https://api.discogs.com/artists/${artist.id}/releases?page=1&per_page=100`
         )
@@ -136,7 +134,6 @@ function App() {
         console.log(member);
         console.log(member.id);
         console.log(member.roles);
-        console.log("looking at page " + currentPage + "for " + member.name);
         const memberReleases = await fetch(
           `https://api.discogs.com/artists/${member.id}/releases?page=1&per_page=100`
         )
@@ -162,7 +159,7 @@ function App() {
     return output;
   };
 
-  const albumContributorReleases = async (band, album) => {
+  const contributorReleases = async (band, album) => {
     console.log("searching for album...");
     // searching with input params
     const response = await getSearchResult();
@@ -222,9 +219,6 @@ function App() {
         console.log(contributor);
         console.log(contributor.id);
         console.log(contributor.roles);
-        console.log(
-          "looking at page " + currentPage + "for " + contributor.name
-        );
         const contributorReleases = await fetch(
           `https://api.discogs.com/artists/${contributor.id}/releases?page=1&per_page=100`
         )
@@ -255,6 +249,7 @@ function App() {
     const output = {
       results: [],
       pagination: [],
+      roles: [],
     };
 
     data.pagination.forEach((links) => {
@@ -275,7 +270,8 @@ function App() {
             prev: artistReleases.pagination.urls?.prev,
             next: artistReleases.pagination.urls?.next,
           });
-          output.results.push(...artistReleases.releases);
+          output.results.push(artistReleases.releases);
+          output.roles.push(artistReleases.roles);
         }
       })
     );
@@ -312,6 +308,16 @@ function App() {
     // );
   };
 
+  const getMemberReleases = async () => {
+    const releases = await memberReleases();
+    setData(releases);
+  };
+
+  const getContributorReleases = async () => {
+    const releases = await contributorReleases();
+    setData(releases);
+  };
+
   const loadLast = async () => {
     const moreReleases = await loadMore("prev");
     console.log(moreReleases);
@@ -326,12 +332,24 @@ function App() {
 
   useEffect(() => {
     console.log(data);
-    console.log(currentPage);
+    // const display = data.results.map((result, index) => {
+    //   return `${result.artist} - ${result.title} ${
+    //     data.roles[index] !== undefined && data.roles[index].join("")
+    //   }`;
+    // });
+    const display = [];
+    data.results.forEach((artistReleases, index) => {
+      artistReleases.map((release) => {
+        display.push(`${release.artist} - ${release.title} `);
+      });
+    });
+    console.log(data.results);
+    setDisplayResults(display);
   }, [data]);
 
   useEffect(() => {
-    console.log(currentPage);
-  }, [currentPage]);
+    console.log(displayResults);
+  }, [displayResults]);
 
   // useEffect(() => {
   //   const filteredResults = excludeArtist
@@ -373,15 +391,13 @@ function App() {
         onChange={toggleArtistExclusion}
       ></input>
       <button onClick={getBandReleases}>artist</button>
-      <button onClick={memberReleases}>members</button>
-      <button onClick={albumContributorReleases}>contributors</button>
+      <button onClick={getMemberReleases}>members</button>
+      <button onClick={getContributorReleases}>contributors</button>
       <div>
-        {data.results &&
-          data.results.map((result) => (
+        {displayResults &&
+          displayResults.map((result) => (
             <>
-              <p>
-                {result.artist} - {result.title}
-              </p>
+              <p>{result}</p>
             </>
           ))}
       </div>
