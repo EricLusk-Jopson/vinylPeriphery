@@ -1,5 +1,6 @@
 import { useState, useEffect, React } from "react";
 import {
+  loadMore,
   createArtistRecord,
   bandReleases,
   memberReleases,
@@ -20,54 +21,6 @@ function App() {
   const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
   const search_url = "https://api.discogs.com/database/search?";
 
-  // console.log(process.env.SEARCH_URL);
-
-  const loadMore = async (relation) => {
-    const output = [];
-    await Promise.all(
-      data.map(async (artist) => {
-        console.log(artist);
-        if (artist.pagination[relation] === undefined) {
-          output.push({
-            ...artist,
-            pagination: {
-              ...artist.pagination,
-              prev: artist.pagination.last,
-              last: artist.pagination.last,
-            },
-            releases: [],
-          });
-        } else {
-          const artistReleases = await fetch(artist.pagination[relation])
-            .then((res) => res.json())
-            .catch((err) => console.log(err));
-          if (
-            artistReleases &&
-            artistReleases.releases &&
-            artistReleases.pagination
-          ) {
-            console.log(artistReleases.pagination.urls);
-            const newArtist = createArtistRecord(
-              artist.name,
-              artist.id,
-              {
-                prev: artistReleases.pagination.urls?.prev,
-                next: artistReleases.pagination.urls?.next,
-                last: artist.pagination.last,
-              },
-              artistReleases.releases,
-              artist.roles
-            );
-            output.push(newArtist);
-          }
-        }
-      })
-    );
-
-    console.log(output);
-    return output;
-  };
-
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -82,20 +35,7 @@ function App() {
 
   const getBandReleases = async () => {
     const releases = await bandReleases(band, album);
-    console.log(releases);
     setData(releases);
-    // setResults(releases.sort((a, b) => b.id - a.id));
-    // setResults(
-    //   releases.sort((a, b) => {
-    //     if (a.title < b.title) {
-    //       return -1;
-    //     }
-    //     if (a.title > b.title) {
-    //       return 1;
-    //     }
-    //     return 0;
-    //   })
-    // );
   };
 
   const getMemberReleases = async () => {
@@ -109,50 +49,49 @@ function App() {
   };
 
   const loadLast = async () => {
-    const moreReleases = await loadMore("prev");
-    console.log(moreReleases);
+    const moreReleases = await loadMore(data, "prev");
     setData(moreReleases);
   };
 
   const loadNext = async () => {
-    const moreReleases = await loadMore("next");
-    console.log(moreReleases);
+    const moreReleases = await loadMore(data, "next");
     setData(moreReleases);
   };
 
   useEffect(() => {
-    console.log(data);
-    // const display = data.results.map((result, index) => {
-    //   return `${result.artist} - ${result.title} ${
-    //     data.roles[index] !== undefined && data.roles[index].join("")
-    //   }`;
-    // });
-    const display = [];
-    data.forEach((artist, index) => {
-      artist.releases.map((release) => {
-        display.push(`${release.artist} - ${release.title} `);
+    const displayReleases = new Map();
+    data.forEach((artist) => {
+      artist.releases.forEach((release) => {
+        const id = release.main_release ? release.main_release : release.id;
+        const contributors = [];
+        if (displayReleases.has(id)) {
+          contributors.push(...displayReleases.get(id).contributors);
+        }
+        if (
+          !contributors.some((contributor) => contributor.name === artist.name)
+        ) {
+          contributors.push({ name: artist.name, roles: artist.roles });
+        }
+        displayReleases.set(id, {
+          artist: release.artist,
+          title: release.title,
+          year: release.year,
+          contributors: contributors,
+        });
       });
     });
-    console.log(data.results);
-    setDisplayResults(display);
-  }, [data]);
-
-  useEffect(() => {
-    console.log(displayResults);
-  }, [displayResults]);
-
-  // useEffect(() => {
-  //   const filteredResults = excludeArtist
-  //     ? results.filter((res) => {
-  //         return (
-  //           res[1].artist !== seedRelease.artists_sort &&
-  //           !seedRelease.artists.some((artist) => artist.name === res[1].artist)
-  //         );
-  //       })
-  //     : results;
-  //   setDisplayResults(filteredResults);
-  //   console.log(excludeArtist);
-  // }, [results, excludeArtist]);
+    let filteredReleases = [...displayReleases.values()];
+    if (excludeArtist) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.artist !== band
+      );
+    }
+    setDisplayResults(
+      filteredReleases
+        .sort((a, b) => b.year - a.year)
+        .sort((a, b) => b.contributors.length - a.contributors.length)
+    );
+  }, [data, excludeArtist]);
 
   return (
     <div className="App">
@@ -176,7 +115,6 @@ function App() {
       <label>Exlude listings by the same artist</label>
       <input
         type="checkbox"
-        defaultChecked
         checked={excludeArtist}
         onChange={toggleArtistExclusion}
       ></input>
@@ -185,9 +123,21 @@ function App() {
       <button onClick={getContributorReleases}>contributors</button>
       <div>
         {displayResults &&
-          displayResults.map((result) => (
+          displayResults.length > 0 &&
+          displayResults.map((release) => (
             <>
-              <p>{result}</p>
+              <h3>
+                {release.artist} - {release.title}, {release.year}.
+              </h3>
+              {release.contributors.map((contributor) => {
+                return (
+                  <p>
+                    - {contributor.name}{" "}
+                    {contributor.roles.lenth > 0 &&
+                      `(${contributor.roles.join(", ")})`}
+                  </p>
+                );
+              })}
             </>
           ))}
       </div>

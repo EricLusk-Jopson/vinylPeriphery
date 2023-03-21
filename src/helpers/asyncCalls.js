@@ -38,7 +38,7 @@ const getArtistReleases = async (artists) => {
             last: artistReleases.pagination.urls?.last,
           },
           artistReleases.releases,
-          artist.roles
+          artist.roles ?? [""]
         );
         output.push(newArtist);
       }
@@ -175,4 +175,46 @@ export const contributorReleases = async (band, album) => {
 
   // for each artist, return their releases
   return await getArtistReleases(contributors);
+};
+
+export const loadMore = async (data, relation) => {
+  const output = [];
+  await Promise.all(
+    data.map(async (artist) => {
+      if (artist.pagination[relation] === undefined) {
+        output.push({
+          ...artist,
+          pagination: {
+            ...artist.pagination,
+            prev: artist.pagination.last,
+            last: artist.pagination.last,
+          },
+          releases: [],
+        });
+      } else {
+        const artistReleases = await fetch(artist.pagination[relation])
+          .then((res) => res.json())
+          .catch((err) => console.log(err));
+        if (
+          artistReleases &&
+          artistReleases.releases &&
+          artistReleases.pagination
+        ) {
+          const newArtist = createArtistRecord(
+            artist.name,
+            artist.id,
+            {
+              prev: artistReleases.pagination.urls?.prev,
+              next: artistReleases.pagination.urls?.next,
+              last: artist.pagination.last,
+            },
+            artistReleases.releases,
+            artist.roles ?? [""]
+          );
+          output.push(newArtist);
+        }
+      }
+    })
+  );
+  return output;
 };
