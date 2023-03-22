@@ -44,29 +44,63 @@ export const StyledSearchCard = styled.div`
   justify-content: flex-end;
   align-items: center;
   text-align: center;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: 20% 50% 30%;
   font-size: 1em;
   cursor: pointer;
-  color: rgb(88 199 250);
 
-  p {
-    display: none;
+  .title-hover {
+    grid-area: 1 / 1 / span 1 / span 1;
+    opacity: 0;
+    transition: 1s;
   }
 
-  h1 {
-    margin-bottom: 50%;
+  .title {
+    grid-area: 2 / 1 / span 1 / span 1;
+    transition: 1s;
   }
 
-  button {
-    margin: 20px 5px;
+  &:hover .title {
+    opacity: 0;
+  }
+
+  &:hover .title-hover {
+    opacity: 1;
+  }
+
+  .body {
+    grid-area: 2 / 1 / span 1 / span 1;
   }
 
   &:hover p {
-    display: inline;
+    color: rgb(88, 199, 250, 1);
   }
 
-  &:hover h1 {
-    display: none;
+  p {
+    font-size: 0.8rem;
+    color: rgb(88, 199, 250, 0);
+    transition: 1s;
+  }
+
+  h1 {
+    color: rgb(88, 199, 250, 1);
+    transition: 0.3s;
+  }
+
+  button {
+    grid-area: 3 / 1 / span 1 / span 1;
+    margin: 20px 5px;
+    color: ${(props) => props.color};
+    background: none;
+    height: 40px;
+    border-radius: 8px;
+    margin: 0px 15px;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: ${(props) => props.color};
+    color: #fff;
   }
 `;

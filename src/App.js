@@ -118,7 +118,7 @@ function App() {
           <SearchCard
             title="Band"
             text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
-            color={"#1c7c86"}
+            color={"rgb(28, 128, 134)"}
           ></SearchCard>
           <SearchCard
             title="Members"
@@ -132,6 +132,7 @@ function App() {
           ></SearchCard>
         </ItemGroup>
       </ContentWindow>
+
       <div style={{ display: "none" }}>
         <form>
           <input

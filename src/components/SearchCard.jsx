@@ -5,10 +5,15 @@ export const SearchCard = ({ title, text, color }) => {
   return (
     <BorderCard color={color}>
       <StyledSearchCard color={color}>
-        <h1>{title}</h1>
-        {text.split(". ").map((sentence) => {
-          return <p>{sentence}</p>;
-        })}
+        <div className="title">
+          <h1>{title}</h1>
+        </div>
+        <div className="body">
+          {text.split(". ").map((sentence) => {
+            return <p>{sentence}</p>;
+          })}
+        </div>
+
         <button>Search</button>
       </StyledSearchCard>
     </BorderCard>
