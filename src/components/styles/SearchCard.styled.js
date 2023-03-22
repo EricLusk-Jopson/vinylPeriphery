@@ -52,7 +52,8 @@ export const StyledSearchCard = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: 0.5s;
+    transition: all 0.4s;
+    transition-delay: 0.4s;
   }
 
   .body {
@@ -65,16 +66,20 @@ export const StyledSearchCard = styled.div`
 
   &:hover .title {
     top: 0%;
+    transition: all 0.6s;
+    transition-delay: 0s;
   }
 
   &:hover p {
     color: rgb(88, 199, 250, 1);
+    transition-delay: 0.4s;
   }
 
   p {
     font-size: 0.9rem;
     color: rgb(88, 199, 250, 0);
-    transition: 1s;
+    transition: 0.6s;
+    transition-delay: 0s;
   }
 
   h1 {

@@ -21,13 +21,12 @@ export const StyledInput = styled.input`
   box-sizing: border-box;
   border-radius: 20px;
   transition: all 0.4s ease-out;
-
-  transition: all 0.4s ease-out;
-  transition-delay: 0.4s;
+  transition-delay: 0s;
 
   &:focus + label {
     transform: translateY(-65px) translateX(0%);
     transition: all 0.4s ease-in;
+    outline: none;
   }
 
   &:focus {
