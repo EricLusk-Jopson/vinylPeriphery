@@ -18,18 +18,15 @@ export const BorderCard = styled.div`
   }
 
   display: flex;
+  flex-grow: 1;
   justify-content: center;
   align-items: center;
-  width: 200px;
   height: 300px;
   margin: 40px;
   border-radius: 8px;
   background-image: linear-gradient(
     var(--rotate),
-    ${(props) => {
-      console.log({ ...props });
-      return tinycolor(props.color).darken(10);
-    }},
+    ${(props) => tinycolor(props.color).darken(10)},
     ${(props) => props.color} 44%,
     ${(props) => tinycolor(props.color).lighten(10)}
   );
@@ -38,39 +35,36 @@ export const BorderCard = styled.div`
 
 export const StyledSearchCard = styled.div`
   background: #191c29;
+  position: relative;
   width: 98%;
   height: 99%;
   border-radius: 8px;
-  justify-content: flex-end;
-  align-items: center;
-  text-align: center;
-  display: grid;
-  grid-template-columns: 100%;
-  grid-template-rows: 20% 50% 30%;
   font-size: 1em;
   cursor: pointer;
-
-  .title-hover {
-    grid-area: 1 / 1 / span 1 / span 1;
-    opacity: 0;
-    transition: 1s;
-  }
+  padding: none;
 
   .title {
-    grid-area: 2 / 1 / span 1 / span 1;
-    transition: 1s;
-  }
-
-  &:hover .title {
-    opacity: 0;
-  }
-
-  &:hover .title-hover {
-    opacity: 1;
+    position: absolute;
+    top: 30%;
+    left: 5%;
+    width: 90%;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.5s;
   }
 
   .body {
-    grid-area: 2 / 1 / span 1 / span 1;
+    position: absolute;
+    top: 20%;
+    left: 5%;
+    width: 90%;
+    height: 20%;
+  }
+
+  &:hover .title {
+    top: 0%;
   }
 
   &:hover p {
@@ -78,24 +72,26 @@ export const StyledSearchCard = styled.div`
   }
 
   p {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: rgb(88, 199, 250, 0);
     transition: 1s;
   }
 
   h1 {
     color: rgb(88, 199, 250, 1);
-    transition: 0.3s;
+    margin: 0;
   }
 
   button {
-    grid-area: 3 / 1 / span 1 / span 1;
-    margin: 20px 5px;
+    position: absolute;
+    bottom: 7%;
+    left: 5%;
+    height: 15%;
+    width: 90%;
     color: ${(props) => props.color};
+    padding: none;
     background: none;
-    height: 40px;
     border-radius: 8px;
-    margin: 0px 15px;
     transition: 0.3s;
   }
 

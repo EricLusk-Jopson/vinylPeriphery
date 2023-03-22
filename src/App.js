@@ -1,4 +1,5 @@
 import { useState, useEffect, React } from "react";
+import { FaUser, FaRecordVinyl } from "react-icons/fa";
 import {
   loadMore,
   bandReleases,
@@ -6,7 +7,8 @@ import {
   contributorReleases,
 } from "./helpers/asyncCalls";
 import { ContentWindow } from "./components/styles/ContentWindow.styled";
-import { ItemGroup, StyledInput } from "./components/styles/InputGroup.styled";
+import { ItemGroup } from "./components/styles/ItemGroup.styled";
+import { Input } from "./components/Input";
 import { SearchCard } from "./components/SearchCard";
 
 function App() {
@@ -95,70 +97,81 @@ function App() {
     );
   }, [data, excludeArtist]);
 
+  useEffect(() => {
+    console.log(data);
+    console.log(displayResults);
+  }, [data, displayResults]);
+
   return (
     <>
       <ContentWindow>
         <ItemGroup>
-          <StyledInput
-            type="text"
+          <Input
+            icon={<FaUser />}
+            text="Band"
+            placeholder="Viagra Boys"
+            onChange={onChange}
             name="band"
             value={band}
-            placeholder="band name"
+          ></Input>
+          <Input
+            icon={<FaRecordVinyl />}
+            text="Album"
+            placeholder="Cave World"
             onChange={onChange}
-          />
-          <StyledInput
-            type="text"
             name="album"
             value={album}
-            placeholder="album name"
-            onChange={onChange}
-          />
+          ></Input>
         </ItemGroup>
         <ItemGroup>
           <SearchCard
             title="Band"
-            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            text="Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
             color={"rgb(28, 128, 134)"}
+            searchFn={getBandReleases}
           ></SearchCard>
           <SearchCard
             title="Members"
-            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            text="Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups."
             color="rgb(28, 128, 134)"
+            searchFn={getMemberReleases}
           ></SearchCard>
           <SearchCard
             title="Credited"
-            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            text="Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform."
             color="rgb(28, 128, 134)"
+            searchFn={getContributorReleases}
           ></SearchCard>
         </ItemGroup>
       </ContentWindow>
+      {displayResults && displayResults.length > 0 && (
+        <ContentWindow reverse>
+          {displayResults.map((release) => (
+            <>
+              <h3>
+                {release.artist} - {release.title}, {release.year}.
+              </h3>
+              {release.contributors.map((contributor) => {
+                return (
+                  <p>
+                    - {contributor.name}{" "}
+                    {contributor.roles.lenth > 0 &&
+                      `(${contributor.roles.join(", ")})`}
+                  </p>
+                );
+              })}
+            </>
+          ))}
+        </ContentWindow>
+      )}
 
       <div style={{ display: "none" }}>
-        <form>
-          <input
-            type="text"
-            name="band"
-            value={band}
-            placeholder="band name"
-            onChange={onChange}
-          />
-          <input
-            type="text"
-            name="album"
-            value={album}
-            placeholder="album name"
-            onChange={onChange}
-          />
-        </form>
         <label>Exlude listings by the same artist</label>
         <input
           type="checkbox"
           checked={excludeArtist}
           onChange={toggleArtistExclusion}
         ></input>
-        <button onClick={getBandReleases}>artist</button>
-        <button onClick={getMemberReleases}>members</button>
-        <button onClick={getContributorReleases}>contributors</button>
         <div>
           {displayResults &&
             displayResults.length > 0 &&

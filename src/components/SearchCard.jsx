@@ -1,7 +1,7 @@
 import React from "react";
 import { StyledSearchCard, BorderCard } from "./styles/SearchCard.styled";
 
-export const SearchCard = ({ title, text, color }) => {
+export const SearchCard = ({ title, text, color, searchFn }) => {
   return (
     <BorderCard color={color}>
       <StyledSearchCard color={color}>
@@ -14,7 +14,7 @@ export const SearchCard = ({ title, text, color }) => {
           })}
         </div>
 
-        <button>Search</button>
+        <button onClick={searchFn}>Search</button>
       </StyledSearchCard>
     </BorderCard>
   );
