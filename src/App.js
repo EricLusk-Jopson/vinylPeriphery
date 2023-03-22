@@ -1,11 +1,13 @@
 import { useState, useEffect, React } from "react";
 import {
   loadMore,
-  createArtistRecord,
   bandReleases,
   memberReleases,
   contributorReleases,
 } from "./helpers/asyncCalls";
+import { ContentWindow } from "./components/styles/ContentWindow.styled";
+import { ItemGroup, StyledInput } from "./components/styles/InputGroup.styled";
+import { SearchCard } from "./components/SearchCard";
 
 function App() {
   const [data, setData] = useState([]);
@@ -94,66 +96,106 @@ function App() {
   }, [data, excludeArtist]);
 
   return (
-    <div className="App">
-      This will be an excellent application
-      <form>
+    <>
+      <ContentWindow>
+        <ItemGroup>
+          <StyledInput
+            type="text"
+            name="band"
+            value={band}
+            placeholder="band name"
+            onChange={onChange}
+          />
+          <StyledInput
+            type="text"
+            name="album"
+            value={album}
+            placeholder="album name"
+            onChange={onChange}
+          />
+        </ItemGroup>
+        <ItemGroup>
+          <SearchCard
+            title="Band"
+            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            color={"#1c7c86"}
+          ></SearchCard>
+          <SearchCard
+            title="Members"
+            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            color="rgb(28, 128, 134)"
+          ></SearchCard>
+          <SearchCard
+            title="Credited"
+            text="Returns a collection of all known releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+            color="rgb(28, 128, 134)"
+          ></SearchCard>
+        </ItemGroup>
+      </ContentWindow>
+      <div style={{ display: "none" }}>
+        <form>
+          <input
+            type="text"
+            name="band"
+            value={band}
+            placeholder="band name"
+            onChange={onChange}
+          />
+          <input
+            type="text"
+            name="album"
+            value={album}
+            placeholder="album name"
+            onChange={onChange}
+          />
+        </form>
+        <label>Exlude listings by the same artist</label>
         <input
-          type="text"
-          name="band"
-          value={band}
-          placeholder="band name"
-          onChange={onChange}
-        />
-        <input
-          type="text"
-          name="album"
-          value={album}
-          placeholder="album name"
-          onChange={onChange}
-        />
-      </form>
-      <label>Exlude listings by the same artist</label>
-      <input
-        type="checkbox"
-        checked={excludeArtist}
-        onChange={toggleArtistExclusion}
-      ></input>
-      <button onClick={getBandReleases}>artist</button>
-      <button onClick={getMemberReleases}>members</button>
-      <button onClick={getContributorReleases}>contributors</button>
-      <div>
-        {displayResults &&
-          displayResults.length > 0 &&
-          displayResults.map((release) => (
-            <>
-              <h3>
-                {release.artist} - {release.title}, {release.year}.
-              </h3>
-              {release.contributors.map((contributor) => {
-                return (
-                  <p>
-                    - {contributor.name}{" "}
-                    {contributor.roles.lenth > 0 &&
-                      `(${contributor.roles.join(", ")})`}
-                  </p>
-                );
-              })}
-            </>
-          ))}
+          type="checkbox"
+          checked={excludeArtist}
+          onChange={toggleArtistExclusion}
+        ></input>
+        <button onClick={getBandReleases}>artist</button>
+        <button onClick={getMemberReleases}>members</button>
+        <button onClick={getContributorReleases}>contributors</button>
+        <div>
+          {displayResults &&
+            displayResults.length > 0 &&
+            displayResults.map((release) => (
+              <>
+                <h3>
+                  {release.artist} - {release.title}, {release.year}.
+                </h3>
+                {release.contributors.map((contributor) => {
+                  return (
+                    <p>
+                      - {contributor.name}{" "}
+                      {contributor.roles.lenth > 0 &&
+                        `(${contributor.roles.join(", ")})`}
+                    </p>
+                  );
+                })}
+              </>
+            ))}
+        </div>
+        <button
+          disabled={data.every(
+            (artist) => artist.pagination.prev === undefined
+          )}
+          onClick={loadLast}
+        >
+          Load Last Page
+        </button>
+        <button
+          disabled={data.every(
+            (artist) => artist.pagination.next === undefined
+          )}
+          onClick={loadNext}
+        >
+          Load Next Page
+        </button>
       </div>
-      <button
-        disabled={data.every((artist) => artist.pagination.prev === undefined)}
-        onClick={loadLast}
-      >
-        Load Last Page
-      </button>
-      <button
-        disabled={data.every((artist) => artist.pagination.next === undefined)}
-        onClick={loadNext}
-      >
-        Load Next Page
-      </button>
-    </div>
+    </>
   );
 }
 
