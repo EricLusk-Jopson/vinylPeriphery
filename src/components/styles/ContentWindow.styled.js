@@ -2,11 +2,9 @@ import styled from "styled-components";
 
 export const ContentWindow = styled.div`
   display: flex;
-  padding-top: 100px;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 100px);
+  justify-content: flex-start;
   height: fit-content;
   background: ${(props) =>
     props.reverse
@@ -18,10 +16,18 @@ export const ContentWindow = styled.div`
   );`
       : `linear-gradient(
     180deg,
-    rgba(2, 0, 36, 1) 0%,
+    rgba(2, 2, 2, 1) 0%,
     rgba(95, 9, 104, 1) 35%,
     rgba(46, 1, 1, 1) 100%
   );`}
   border: none;
   z-index: -1;
+`;
+
+export const SearchContainer = styled.div`
+  padding-top: 25vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 75vh;
 `;

@@ -9,7 +9,7 @@ import {
   Icon,
 } from "./styles/ResultCard.styled";
 
-export const ResultCard = ({ title, body }) => {
+export const ResultCard = ({ title, artist, body }) => {
   const [open, setOpen] = useState(false);
 
   const toggleCollapse = (e) => {
@@ -20,10 +20,18 @@ export const ResultCard = ({ title, body }) => {
   return (
     <StyledResultCard>
       <StyledHeader onClick={toggleCollapse}>
-        <H1>{title}</H1>
+        <h4>{title}</h4>
         <Icon>{open ? <FaCaretUp /> : <FaCaretDown />}</Icon>
+        <h5>{`By: ${artist}`}</h5>
       </StyledHeader>
-      {open && <StyledBody>{body}</StyledBody>}
+      {open && (
+        <StyledBody>
+          <p>Featuring: </p>
+          {body.map((text) => (
+            <p>{text}</p>
+          ))}
+        </StyledBody>
+      )}
     </StyledResultCard>
   );
 };
