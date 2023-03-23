@@ -1,5 +1,6 @@
-Determine at each stage, how many calls are to be made.
-If this exceeds maximum threshold, stagger calls
-one call every 3s
-add a loading bar for the number of calls
-while search is in progress, disable all search buttons
+In the top right add a cog icon
+when clicked, open up a settings modal
+settings allow for searched band to be included or not
+settings allow for searched album to be included or not
+settings allow for certains roles to be excluded from the search
+saves settings in the state and display results are filtered accordingly
