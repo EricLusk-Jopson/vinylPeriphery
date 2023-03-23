@@ -10,6 +10,7 @@ import { ContentWindow } from "./components/styles/ContentWindow.styled";
 import { ItemGroup } from "./components/styles/ItemGroup.styled";
 import { Input } from "./components/Input";
 import { SearchCard } from "./components/SearchCard";
+import { ResultCard } from "./components/ResultCard";
 
 function App() {
   const [data, setData] = useState([]);
@@ -60,6 +61,11 @@ function App() {
   const loadNext = async () => {
     const moreReleases = await loadMore(data, "next");
     setData(moreReleases);
+  };
+
+  const toggleCollapse = (e) => {
+    e.preventDefault();
+    console.log();
   };
 
   useEffect(() => {
@@ -148,6 +154,18 @@ function App() {
         <ContentWindow reverse>
           {displayResults.map((release) => (
             <>
+              <ResultCard
+                title={`${release.artist} - ${release.title}`}
+                body={release.contributors.map((contributor) => {
+                  return (
+                    <p>
+                      - {contributor.name}{" "}
+                      {contributor.roles.lenth > 0 &&
+                        `(${contributor.roles.join(", ")})`}
+                    </p>
+                  );
+                })}
+              ></ResultCard>
               <h3>
                 {release.artist} - {release.title}, {release.year}.
               </h3>
