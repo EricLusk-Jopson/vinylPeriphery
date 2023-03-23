@@ -1,1 +1,5 @@
-Add styled pagination options to the top of the results
+alert when no results are found
+alert when no members are found
+alert when no contributors are found
+
+use an alert modal rather than alerts themselves
