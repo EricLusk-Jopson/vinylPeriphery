@@ -1,0 +1,5 @@
+Determine at each stage, how many calls are to be made.
+If this exceeds maximum threshold, stagger calls
+one call every 3s
+add a loading bar for the number of calls
+while search is in progress, disable all search buttons
