@@ -1,11 +1,20 @@
 import { useState, useEffect, React } from "react";
+import { FaUser, FaRecordVinyl } from "react-icons/fa";
 import {
   loadMore,
-  createArtistRecord,
   bandReleases,
   memberReleases,
   contributorReleases,
 } from "./helpers/asyncCalls";
+import {
+  ContentWindow,
+  SearchContainer,
+} from "./components/styles/ContentWindow.styled";
+import { ItemGroup } from "./components/styles/ItemGroup.styled";
+import { Input } from "./components/Input";
+import { SearchCard } from "./components/SearchCard";
+import { ResultCard } from "./components/ResultCard";
+import { Results } from "./components/styles/ResultCard.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -58,6 +67,11 @@ function App() {
     setData(moreReleases);
   };
 
+  const toggleCollapse = (e) => {
+    e.preventDefault();
+    console.log();
+  };
+
   useEffect(() => {
     const displayReleases = new Map();
     data.forEach((artist) => {
@@ -93,67 +107,119 @@ function App() {
     );
   }, [data, excludeArtist]);
 
+  useEffect(() => {
+    console.log(data);
+    console.log(displayResults);
+  }, [data, displayResults]);
+
   return (
-    <div className="App">
-      This will be an excellent application
-      <form>
+    <>
+      <ContentWindow>
+        <SearchContainer>
+          <ItemGroup>
+            <Input
+              icon={<FaUser />}
+              text="Band"
+              placeholder="Viagra Boys"
+              onChange={onChange}
+              name="band"
+              value={band}
+            ></Input>
+            <Input
+              icon={<FaRecordVinyl />}
+              text="Album"
+              placeholder="Cave World"
+              onChange={onChange}
+              name="album"
+              value={album}
+            ></Input>
+          </ItemGroup>
+          <ItemGroup>
+            <SearchCard
+              title="Band"
+              text="Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
+              color={"rgb(28, 128, 134)"}
+              searchFn={getBandReleases}
+            ></SearchCard>
+            <SearchCard
+              title="Members"
+              text="Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups."
+              color="rgb(28, 128, 134)"
+              searchFn={getMemberReleases}
+            ></SearchCard>
+            <SearchCard
+              title="Credited"
+              text="Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform."
+              color="rgb(28, 128, 134)"
+              searchFn={getContributorReleases}
+            ></SearchCard>
+          </ItemGroup>
+        </SearchContainer>
+        <div>{`Search returned ${displayResults.length} records`}</div>
+        {displayResults && displayResults.length > 0 && (
+          <Results>
+            {displayResults.map((release) => (
+              <ResultCard
+                title={release.title}
+                artist={release.artist}
+                body={release.contributors.map(
+                  (contributor) =>
+                    contributor.name +
+                    (contributor.roles.length > 0 && contributor.roles[0] !== ""
+                      ? ` (${contributor.roles.join(", ")})`
+                      : "")
+                )}
+              ></ResultCard>
+            ))}
+          </Results>
+        )}
+      </ContentWindow>
+
+      <div style={{ display: "none" }}>
+        <label>Exlude listings by the same artist</label>
         <input
-          type="text"
-          name="band"
-          value={band}
-          placeholder="band name"
-          onChange={onChange}
-        />
-        <input
-          type="text"
-          name="album"
-          value={album}
-          placeholder="album name"
-          onChange={onChange}
-        />
-      </form>
-      <label>Exlude listings by the same artist</label>
-      <input
-        type="checkbox"
-        checked={excludeArtist}
-        onChange={toggleArtistExclusion}
-      ></input>
-      <button onClick={getBandReleases}>artist</button>
-      <button onClick={getMemberReleases}>members</button>
-      <button onClick={getContributorReleases}>contributors</button>
-      <div>
-        {displayResults &&
-          displayResults.length > 0 &&
-          displayResults.map((release) => (
-            <>
-              <h3>
-                {release.artist} - {release.title}, {release.year}.
-              </h3>
-              {release.contributors.map((contributor) => {
-                return (
-                  <p>
-                    - {contributor.name}{" "}
-                    {contributor.roles.lenth > 0 &&
-                      `(${contributor.roles.join(", ")})`}
-                  </p>
-                );
-              })}
-            </>
-          ))}
+          type="checkbox"
+          checked={excludeArtist}
+          onChange={toggleArtistExclusion}
+        ></input>
+        <div>
+          {displayResults &&
+            displayResults.length > 0 &&
+            displayResults.map((release) => (
+              <>
+                <h3>
+                  {release.artist} - {release.title}, {release.year}.
+                </h3>
+                {release.contributors.map((contributor) => {
+                  return (
+                    <p>
+                      - {contributor.name}{" "}
+                      {contributor.roles.lenth > 0 &&
+                        `(${contributor.roles.join(", ")})`}
+                    </p>
+                  );
+                })}
+              </>
+            ))}
+        </div>
+        <button
+          disabled={data.every(
+            (artist) => artist.pagination.prev === undefined
+          )}
+          onClick={loadLast}
+        >
+          Load Last Page
+        </button>
+        <button
+          disabled={data.every(
+            (artist) => artist.pagination.next === undefined
+          )}
+          onClick={loadNext}
+        >
+          Load Next Page
+        </button>
       </div>
-      <button
-        disabled={data.every((artist) => artist.pagination.prev === undefined)}
-        onClick={loadLast}
-      >
-        Load Last Page
-      </button>
-      <button
-        disabled={data.every((artist) => artist.pagination.next === undefined)}
-        onClick={loadNext}
-      >
-        Load Next Page
-      </button>
-    </div>
+    </>
   );
 }
 

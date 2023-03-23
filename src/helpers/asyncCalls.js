@@ -51,14 +51,14 @@ const getArtistReleases = async (artists) => {
 export const bandReleases = async (band, album) => {
   // searching with input params
   const response = await getSearchResult(band, album);
-  console.log(response);
-  console.log(response.results);
 
   // fetch the release information for the first result
   const release = await fetch(response.results[0].resource_url).then((res) =>
     res.json()
   );
-  console.log(release);
+  console.log(
+    await fetch(response.results[0].resource_url).then((res) => res.json())
+  );
 
   // fetch the list of artists
   const artists = await Promise.all(
