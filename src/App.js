@@ -1,10 +1,11 @@
 import { useState, useEffect, React } from "react";
 import { FaUser, FaRecordVinyl } from "react-icons/fa";
 import {
+  getSearchResult,
+  getArtists,
+  getMembers,
+  getContributors,
   loadMore,
-  bandReleases,
-  memberReleases,
-  contributorReleases,
 } from "./helpers/asyncCalls";
 import {
   ContentWindow,
@@ -15,6 +16,7 @@ import { Input } from "./components/Input";
 import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
 import { Results } from "./components/styles/ResultCard.styled";
+import { quickDelay, longDelay } from "./helpers/magicNumbers";
 
 function App() {
   const [data, setData] = useState([]);
@@ -44,6 +46,57 @@ function App() {
   const toggleArtistExclusion = (e) => {
     e.preventDefault();
     setExcludeArtist(!excludeArtist);
+  };
+
+  const bandReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    const searchResponse = await getSearchResult(band, album);
+    const release = await fetch(searchResponse.results[0].resource_url).then(
+      (res) => res.json()
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    let callCount = 2;
+    const artists = await getArtists(release, fast, callCount);
+    console.log(artists);
+    return artists;
+  };
+
+  const memberReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    const response = await getSearchResult(band, album);
+    const release = await fetch(response.results[0].resource_url).then((res) =>
+      res.json()
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    let callCount = 2;
+    const members = await getMembers(release, fast, callCount);
+    console.log(members);
+    return members;
+  };
+
+  const contributorReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    let callCount = 0;
+
+    const response = await getSearchResult(band, album);
+
+    let release;
+    for (let i = 0; i < Math.min(5, response.results.length); i++) {
+      const nextRelease = await fetch(response.results[i].resource_url).then(
+        (res) => res.json()
+      );
+      callCount++;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+        release = nextRelease;
+        break;
+      }
+      release = nextRelease;
+    }
+    const contributors = await getContributors(release, fast, callCount);
+    console.log(contributors);
+    return contributors;
   };
 
   const handleSearch = async (method) => {
