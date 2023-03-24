@@ -1,10 +1,11 @@
 import { useState, useEffect, React } from "react";
 import { FaUser, FaRecordVinyl } from "react-icons/fa";
 import {
+  getSearchResult,
+  getArtists,
+  getMembers,
+  getContributors,
   loadMore,
-  bandReleases,
-  memberReleases,
-  contributorReleases,
 } from "./helpers/asyncCalls";
 import {
   ContentWindow,
@@ -15,11 +16,16 @@ import { Input } from "./components/Input";
 import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
 import { Results } from "./components/styles/ResultCard.styled";
+import { quickDelay, longDelay } from "./helpers/magicNumbers";
 
 function App() {
   const [data, setData] = useState([]);
   const [displayResults, setDisplayResults] = useState([]);
   const [excludeArtist, setExcludeArtist] = useState(true);
+  const [excludeAlbum, setExcludeAlbum] = useState(true);
+  const [settings, setSettings] = useState({ fastSearch: true });
+  const [inProgress, setInProgress] = useState(false);
+  const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
     band: "",
     album: "",
@@ -42,19 +48,84 @@ function App() {
     setExcludeArtist(!excludeArtist);
   };
 
-  const getBandReleases = async () => {
-    const releases = await bandReleases(band, album);
-    setData(releases);
+  const bandReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    const searchResponse = await getSearchResult(band, album);
+    const release = await fetch(searchResponse.results[0].resource_url).then(
+      (res) => res.json()
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    let callCount = 2;
+    const artists = await getArtists(release, fast, callCount);
+    console.log(artists);
+    return artists;
   };
 
-  const getMemberReleases = async () => {
-    const releases = await memberReleases(band, album);
-    setData(releases);
+  const memberReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    const response = await getSearchResult(band, album);
+    const release = await fetch(response.results[0].resource_url).then((res) =>
+      res.json()
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    let callCount = 2;
+    const members = await getMembers(release, fast, callCount);
+    console.log(members);
+    return members;
   };
 
-  const getContributorReleases = async () => {
-    const releases = await contributorReleases(band, album);
+  const contributorReleases = async (band, album, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    let callCount = 0;
+
+    const response = await getSearchResult(band, album);
+
+    let release;
+    for (let i = 0; i < Math.min(5, response.results.length); i++) {
+      const nextRelease = await fetch(response.results[i].resource_url).then(
+        (res) => res.json()
+      );
+      callCount++;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+        release = nextRelease;
+        break;
+      }
+      release = nextRelease;
+    }
+    const contributors = await getContributors(release, fast, callCount);
+    console.log(contributors);
+    return contributors;
+  };
+
+  const handleSearch = async (method) => {
+    if (!settings.fastSearch) {
+      setInProgress(true);
+    }
+    let releases;
+    switch (method) {
+      case "band":
+        releases = await bandReleases(band, album, settings.fastSearch);
+        break;
+
+      case "member":
+        releases = await memberReleases(band, album, settings.fastSearch);
+        break;
+
+      case "contributor":
+        releases = await contributorReleases(band, album, settings.fastSearch);
+        break;
+
+      default:
+        releases = [];
+        break;
+    }
     setData(releases);
+    setInProgress(false);
+    if (settings.fastSearch) {
+      setCooldown(true);
+    }
   };
 
   const loadLast = async () => {
@@ -65,11 +136,6 @@ function App() {
   const loadNext = async () => {
     const moreReleases = await loadMore(data, "next");
     setData(moreReleases);
-  };
-
-  const toggleCollapse = (e) => {
-    e.preventDefault();
-    console.log();
   };
 
   useEffect(() => {
@@ -100,17 +166,32 @@ function App() {
         (release) => release.artist !== band
       );
     }
+    if (excludeAlbum) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.title !== album
+      );
+    }
+
     setDisplayResults(
       filteredReleases
         .sort((a, b) => b.year - a.year)
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
-  }, [data, excludeArtist]);
+  }, [data, excludeArtist, band, album]);
 
   useEffect(() => {
-    console.log(data);
-    console.log(displayResults);
+    // console.log(data);
+    // console.log(displayResults);
   }, [data, displayResults]);
+
+  useEffect(() => {
+    async function coolDownAfterFastSearch() {
+      if (coolDown) {
+        await new Promise(() => setTimeout(setCooldown(false), 60000));
+      }
+    }
+    coolDownAfterFastSearch();
+  }, [coolDown]);
 
   return (
     <>
@@ -139,27 +220,31 @@ function App() {
               title="Band"
               text="Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
               color={"rgb(28, 128, 134)"}
-              searchFn={getBandReleases}
+              searchFn={() => handleSearch("band")}
+              disabled={band === "" || album === ""}
             ></SearchCard>
             <SearchCard
               title="Members"
               text="Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups."
               color="rgb(28, 128, 134)"
-              searchFn={getMemberReleases}
+              searchFn={() => handleSearch("member")}
+              disabled={band === "" || album === ""}
             ></SearchCard>
             <SearchCard
               title="Credited"
               text="Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform."
               color="rgb(28, 128, 134)"
-              searchFn={getContributorReleases}
+              searchFn={() => handleSearch("contributor")}
+              disabled={band === "" || album === ""}
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>
         <div>{`Search returned ${displayResults.length} records`}</div>
         {displayResults && displayResults.length > 0 && (
           <Results>
-            {displayResults.map((release) => (
+            {displayResults.map((release, i) => (
               <ResultCard
+                key={`resultCard-${i}`}
                 title={release.title}
                 artist={release.artist}
                 body={release.contributors.map(
