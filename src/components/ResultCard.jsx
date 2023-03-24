@@ -27,8 +27,8 @@ export const ResultCard = ({ title, artist, body }) => {
       {open && (
         <StyledBody>
           <p>Featuring: </p>
-          {body.map((text) => (
-            <p>{text}</p>
+          {body.map((text, i) => (
+            <p key={`featured-${i}`}>{text}</p>
           ))}
         </StyledBody>
       )}

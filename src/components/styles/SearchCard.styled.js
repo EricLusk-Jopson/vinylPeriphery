@@ -98,6 +98,7 @@ export const StyledSearchCard = styled.div`
     background: none;
     border-radius: 8px;
     transition: 0.3s;
+    opacity: ${(props) => (props.disabled ? 0.01 : 1)};
   }
 
   button:hover {
