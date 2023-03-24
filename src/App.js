@@ -69,7 +69,11 @@ function App() {
   const getContributorReleases = async () => {
     // let searchStage = { inProgress: true, coolingDown: false };
     // setSearchStages(searchStage);
-    const releases = await contributorReleases(band, album);
+    const releases = await contributorReleases(
+      band,
+      album,
+      settings.fastSearch
+    );
     // searchStage = { inProgress: false, coolingDown: true };
     // setSearchStages(searchStage);
     setData(releases);

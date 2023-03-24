@@ -171,52 +171,17 @@ const getMembers = async (release, fastSearch, callCount) => {
   return output;
 };
 
-export const bandReleases = async (band, album, fast) => {
-  let callCount = 0;
-  const searchResponse = await getSearchResult(band, album);
-  const release = await fetch(searchResponse.results[0].resource_url).then(
-    (res) => res.json()
-  );
-  const artists = await getArtists(release, fast, callCount);
-  console.log(artists);
-  return artists;
-};
+const getContributors = async (release, fastSearch, callCount) => {
+  const delay = fastSearch ? quickDelay : longDelay;
+  let currentCount = callCount;
+  const output = [];
 
-export const memberReleases = async (band, album, fast) => {
-  const response = await getSearchResult(band, album);
-  const release = await fetch(response.results[0].resource_url).then((res) =>
-    res.json()
-  );
-  const members = await getMembers(release, fast);
-  console.log(members);
-  return members;
-};
-
-export const contributorReleases = async (band, album) => {
-  console.log("searching for album...");
-  // searching with input params
-  const response = await getSearchResult(band, album);
-  console.log(response);
-  console.log(response.results);
-
-  // fetch the release information for the first result that has an extra artists
-  let release;
-  for (let i = 0; i < Math.min(5, response.results.length); i++) {
-    const nextRelease = await fetch(response.results[i].resource_url).then(
-      (res) => res.json()
-    );
-    console.log(i, nextRelease);
-    if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
-      release = nextRelease;
-      break;
-    }
-    release = nextRelease;
-  }
   console.log(release);
   console.log(release.extraartists);
 
   if (!release.extraartists && release.extraartists.length === 0) {
     alert("couldn't locate a list of credited artists for this album :(");
+    return [];
   }
   // form a collection of relevant contributors and their roles
   const contributors = new Map();
@@ -244,8 +209,109 @@ export const contributorReleases = async (band, album) => {
   });
   console.log(contributors);
 
-  // for each artist, return their releases
-  return [];
+  // for each contributor
+  for (const contributor of [...contributors.values()]) {
+    if (fastSearch && currentCount >= callLimit - 2) break;
+    try {
+      // fetch their information
+      const contributorResponse = await fetch(contributor.link).then((res) =>
+        res.json()
+      );
+      callCount++;
+      console.log(contributorResponse);
+
+      // fetch their releases and count++
+      const contributorReleasesResponse = await fetch(
+        `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
+      ).then((res) => res.json());
+      currentCount++;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Check that the contributor release response is properly formatted
+      if (
+        contributorReleasesResponse &&
+        contributorReleasesResponse.releases &&
+        contributorReleasesResponse.pagination
+      ) {
+        // Create a new artist with the contributor information and add it to the output
+        const newArtist = createArtistRecord(
+          contributor.name,
+          contributor.id,
+          {
+            prev: contributorReleasesResponse.pagination.urls?.prev,
+            next: contributorReleasesResponse.pagination.urls?.next,
+            last: contributorReleasesResponse.pagination.urls?.last,
+          },
+          contributorReleasesResponse.releases,
+          contributor.roles ?? [""]
+        );
+        output.push(newArtist);
+      }
+    } catch (error) {
+      console.log(`Error: ${error}`);
+    }
+  }
+  console.log(output);
+
+  return output;
+};
+
+export const bandReleases = async (band, album, fast) => {
+  const delay = fast ? quickDelay : longDelay;
+  const searchResponse = await getSearchResult(band, album);
+  const release = await fetch(searchResponse.results[0].resource_url).then(
+    (res) => res.json()
+  );
+  await new Promise((resolve) => setTimeout(resolve, delay));
+  let callCount = 2;
+  const artists = await getArtists(release, fast, callCount);
+  console.log(artists);
+  return artists;
+};
+
+export const memberReleases = async (band, album, fast) => {
+  const delay = fast ? quickDelay : longDelay;
+  const response = await getSearchResult(band, album);
+  const release = await fetch(response.results[0].resource_url).then((res) =>
+    res.json()
+  );
+  await new Promise((resolve) => setTimeout(resolve, delay));
+  let callCount = 2;
+  const members = await getMembers(release, fast, callCount);
+  console.log(members);
+  return members;
+};
+
+// if releases are properly formatted, add them to the output
+
+export const contributorReleases = async (band, album, fast) => {
+  const delay = fast ? quickDelay : longDelay;
+  let callCount = 0;
+  console.log("searching for album...");
+  // searching with input params
+  const response = await getSearchResult(band, album);
+  console.log(response);
+  console.log(response.results);
+
+  // fetch the release information for the first result that has an extra artists
+  let release;
+  for (let i = 0; i < Math.min(5, response.results.length); i++) {
+    const nextRelease = await fetch(response.results[i].resource_url).then(
+      (res) => res.json()
+    );
+    callCount++;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+
+    console.log(i, nextRelease);
+    if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+      release = nextRelease;
+      break;
+    }
+    release = nextRelease;
+  }
+  const contributors = await getContributors(release, fast, callCount);
+  console.log(contributors);
+  return contributors;
 };
 
 export const loadMore = async (data, relation) => {
