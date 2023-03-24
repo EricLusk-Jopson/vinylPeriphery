@@ -20,11 +20,10 @@ function App() {
   const [data, setData] = useState([]);
   const [displayResults, setDisplayResults] = useState([]);
   const [excludeArtist, setExcludeArtist] = useState(true);
+  const [excludeAlbum, setExcludeAlbum] = useState(true);
   const [settings, setSettings] = useState({ fastSearch: true });
-  // const [searchStages, setSearchStages] = useState({
-  //   inProgress: false,
-  //   coolingDown: false,
-  // });
+  const [inProgress, setInProgress] = useState(false);
+  const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
     band: "",
     album: "",
@@ -47,36 +46,33 @@ function App() {
     setExcludeArtist(!excludeArtist);
   };
 
-  // TODO: refactor these three methods into one which accepts a parameter
-  const getBandReleases = async () => {
-    // let searchStage = { inProgress: true, coolingDown: false };
-    // setSearchStages(searchStage);
-    const releases = await bandReleases(band, album, settings.fastSearch);
-    // searchStage = { inProgress: false, coolingDown: true };
-    // setSearchStages(searchStage);
-    setData(releases);
-  };
+  const handleSearch = async (method) => {
+    if (!settings.fastSearch) {
+      setInProgress(true);
+    }
+    let releases;
+    switch (method) {
+      case "band":
+        releases = await bandReleases(band, album, settings.fastSearch);
+        break;
 
-  const getMemberReleases = async () => {
-    // let searchStage = { inProgress: true, coolingDown: false };
-    // setSearchStages(searchStage);
-    const releases = await memberReleases(band, album, settings.fastSearch);
-    // searchStage = { inProgress: false, coolingDown: true };
-    // setSearchStages(searchStage);
-    setData(releases);
-  };
+      case "member":
+        releases = await memberReleases(band, album, settings.fastSearch);
+        break;
 
-  const getContributorReleases = async () => {
-    // let searchStage = { inProgress: true, coolingDown: false };
-    // setSearchStages(searchStage);
-    const releases = await contributorReleases(
-      band,
-      album,
-      settings.fastSearch
-    );
-    // searchStage = { inProgress: false, coolingDown: true };
-    // setSearchStages(searchStage);
+      case "contributor":
+        releases = await contributorReleases(band, album, settings.fastSearch);
+        break;
+
+      default:
+        releases = [];
+        break;
+    }
     setData(releases);
+    setInProgress(false);
+    if (settings.fastSearch) {
+      setCooldown(true);
+    }
   };
 
   const loadLast = async () => {
@@ -117,26 +113,32 @@ function App() {
         (release) => release.artist !== band
       );
     }
+    if (excludeAlbum) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.title !== album
+      );
+    }
+
     setDisplayResults(
       filteredReleases
         .sort((a, b) => b.year - a.year)
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
-  }, [data, excludeArtist]);
+  }, [data, excludeArtist, band, album]);
 
   useEffect(() => {
     // console.log(data);
     // console.log(displayResults);
   }, [data, displayResults]);
 
-  // useEffect(() => {
-  //   if (searchStages.coolingDown) {
-  //     setTimeout(
-  //       () => setSearchStages({ inProgress: false, coolingDown: false }),
-  //       10000
-  //     );
-  //   }
-  // }, [searchStages]);
+  useEffect(() => {
+    async function coolDownAfterFastSearch() {
+      if (coolDown) {
+        await new Promise(() => setTimeout(setCooldown(false), 60000));
+      }
+    }
+    coolDownAfterFastSearch();
+  }, [coolDown]);
 
   return (
     <>
@@ -165,21 +167,21 @@ function App() {
               title="Band"
               text="Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
               color={"rgb(28, 128, 134)"}
-              searchFn={getBandReleases}
+              searchFn={() => handleSearch("band")}
               disabled={band === "" || album === ""}
             ></SearchCard>
             <SearchCard
               title="Members"
               text="Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups."
               color="rgb(28, 128, 134)"
-              searchFn={getMemberReleases}
+              searchFn={() => handleSearch("member")}
               disabled={band === "" || album === ""}
             ></SearchCard>
             <SearchCard
               title="Credited"
               text="Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform."
               color="rgb(28, 128, 134)"
-              searchFn={getContributorReleases}
+              searchFn={() => handleSearch("contributor")}
               disabled={band === "" || album === ""}
             ></SearchCard>
           </ItemGroup>
@@ -187,8 +189,9 @@ function App() {
         <div>{`Search returned ${displayResults.length} records`}</div>
         {displayResults && displayResults.length > 0 && (
           <Results>
-            {displayResults.map((release) => (
+            {displayResults.map((release, i) => (
               <ResultCard
+                key={`resultCard-${i}`}
                 title={release.title}
                 artist={release.artist}
                 body={release.contributors.map(
