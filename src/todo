@@ -3,3 +3,12 @@ If this exceeds maximum threshold, stagger calls
 one call every 3s
 add a loading bar for the number of calls
 while search is in progress, disable all search buttons
+
+for comprehensive searching:
+
+hit the search button
+axios to backend for search request
+fetch the album(s)
+Sum the number of artists
+
+for fast searching:
