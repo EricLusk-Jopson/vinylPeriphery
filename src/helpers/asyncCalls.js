@@ -10,7 +10,7 @@ export const createArtistRecord = (name, id, pagination, releases, roles) => {
   };
 };
 
-export const getSearchResult = async (band, album, callCount) => {
+export const getSearchResult = async (band, album) => {
   return await fetch(
     `https://api.discogs.com/database/search?release_title=${album}&artist=${band}&type=release&sort=year&sort_order=asc&key=owJjvljKmrcdSbXFVPTu&secret=wgJurrmQFbROAyrmByuLrZMRMhDznPaK`
   ).then((res) => res.json());
@@ -215,7 +215,8 @@ export const getContributors = async (release, fastSearch, callCount) => {
       const contributorResponse = await fetch(contributor.link).then((res) =>
         res.json()
       );
-      callCount++;
+      currentCount++;
+      console.log(`Call Count: ${currentCount}`);
       console.log(contributorResponse);
 
       // fetch their releases and count++
@@ -223,6 +224,7 @@ export const getContributors = async (release, fastSearch, callCount) => {
         `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
       ).then((res) => res.json());
       currentCount++;
+      console.log(`Call Count: ${currentCount}`);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
       // Check that the contributor release response is properly formatted
@@ -254,44 +256,44 @@ export const getContributors = async (release, fastSearch, callCount) => {
   return output;
 };
 
-export const loadMore = async (data, relation) => {
+export const loadMore = async (data, relation, fastSearch) => {
+  let currentCount = 0;
   const output = [];
-  await Promise.all(
-    data.map(async (artist) => {
-      if (artist.pagination[relation] === undefined) {
-        output.push({
-          ...artist,
-          pagination: {
-            ...artist.pagination,
-            prev: artist.pagination.last,
+  for (const artist of data) {
+    if (artist.pagination[relation] === undefined) {
+      output.push({
+        ...artist,
+        pagination: {
+          ...artist.pagination,
+          prev: artist.pagination.last,
+          last: artist.pagination.last,
+        },
+        releases: [],
+      });
+    } else {
+      if (fastSearch && currentCount >= callLimit - 1) break;
+      const artistReleases = await fetch(artist.pagination[relation])
+        .then((res) => res.json())
+        .catch((err) => console.log(err));
+      if (
+        artistReleases &&
+        artistReleases.releases &&
+        artistReleases.pagination
+      ) {
+        const newArtist = createArtistRecord(
+          artist.name,
+          artist.id,
+          {
+            prev: artistReleases.pagination.urls?.prev,
+            next: artistReleases.pagination.urls?.next,
             last: artist.pagination.last,
           },
-          releases: [],
-        });
-      } else {
-        const artistReleases = await fetch(artist.pagination[relation])
-          .then((res) => res.json())
-          .catch((err) => console.log(err));
-        if (
-          artistReleases &&
-          artistReleases.releases &&
-          artistReleases.pagination
-        ) {
-          const newArtist = createArtistRecord(
-            artist.name,
-            artist.id,
-            {
-              prev: artistReleases.pagination.urls?.prev,
-              next: artistReleases.pagination.urls?.next,
-              last: artist.pagination.last,
-            },
-            artistReleases.releases,
-            artist.roles ?? [""]
-          );
-          output.push(newArtist);
-        }
+          artistReleases.releases,
+          artist.roles ?? [""]
+        );
+        output.push(newArtist);
       }
-    })
-  );
+    }
+  }
   return output;
 };

@@ -17,6 +17,7 @@ import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
 import { Results } from "./components/styles/ResultCard.styled";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
+import { Button } from "./components/styles/Button.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -76,7 +77,7 @@ function App() {
 
   const contributorReleases = async (band, album, fast) => {
     const delay = fast ? quickDelay : longDelay;
-    let callCount = 0;
+    let callCount = 1;
 
     const response = await getSearchResult(band, album);
 
@@ -86,6 +87,7 @@ function App() {
         (res) => res.json()
       );
       callCount++;
+      console.log(`Call Count: ${callCount}`);
       await new Promise((resolve) => setTimeout(resolve, delay));
 
       if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
@@ -129,12 +131,12 @@ function App() {
   };
 
   const loadLast = async () => {
-    const moreReleases = await loadMore(data, "prev");
+    const moreReleases = await loadMore(data, "prev", settings.fastSearch);
     setData(moreReleases);
   };
 
   const loadNext = async () => {
-    const moreReleases = await loadMore(data, "next");
+    const moreReleases = await loadMore(data, "next", settings.fastSearch);
     setData(moreReleases);
   };
 
@@ -178,11 +180,6 @@ function App() {
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
   }, [data, excludeArtist, band, album]);
-
-  useEffect(() => {
-    // console.log(data);
-    // console.log(displayResults);
-  }, [data, displayResults]);
 
   useEffect(() => {
     async function coolDownAfterFastSearch() {
@@ -239,9 +236,31 @@ function App() {
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>
-        <div>{`Search returned ${displayResults.length} records`}</div>
         {displayResults && displayResults.length > 0 && (
           <Results>
+            <ItemGroup>
+              <Button
+                color="rgb(28, 128, 134)"
+                disabled={data.every(
+                  (artist) => artist.pagination.prev === undefined
+                )}
+                onClick={loadLast}
+              >
+                Load Last Page
+              </Button>
+              <div
+                style={{ color: "#fff" }}
+              >{`Search returned ${displayResults.length} records`}</div>
+              <Button
+                color="rgb(28, 128, 134)"
+                disabled={data.every(
+                  (artist) => artist.pagination.next === undefined
+                )}
+                onClick={loadNext}
+              >
+                Load Next Page
+              </Button>
+            </ItemGroup>
             {displayResults.map((release, i) => (
               <ResultCard
                 key={`resultCard-${i}`}
@@ -267,42 +286,6 @@ function App() {
           checked={excludeArtist}
           onChange={toggleArtistExclusion}
         ></input>
-        <div>
-          {displayResults &&
-            displayResults.length > 0 &&
-            displayResults.map((release) => (
-              <>
-                <h3>
-                  {release.artist} - {release.title}, {release.year}.
-                </h3>
-                {release.contributors.map((contributor) => {
-                  return (
-                    <p>
-                      - {contributor.name}{" "}
-                      {contributor.roles.lenth > 0 &&
-                        `(${contributor.roles.join(", ")})`}
-                    </p>
-                  );
-                })}
-              </>
-            ))}
-        </div>
-        <button
-          disabled={data.every(
-            (artist) => artist.pagination.prev === undefined
-          )}
-          onClick={loadLast}
-        >
-          Load Last Page
-        </button>
-        <button
-          disabled={data.every(
-            (artist) => artist.pagination.next === undefined
-          )}
-          onClick={loadNext}
-        >
-          Load Next Page
-        </button>
       </div>
     </>
   );
