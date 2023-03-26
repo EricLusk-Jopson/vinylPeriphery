@@ -17,6 +17,7 @@ import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
 import { Results } from "./components/styles/ResultCard.styled";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
+import { Button } from "./components/styles/Button.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -235,25 +236,31 @@ function App() {
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>
-        <div>{`Search returned ${displayResults.length} records`}</div>
         {displayResults && displayResults.length > 0 && (
           <Results>
-            <button
-              disabled={data.every(
-                (artist) => artist.pagination.prev === undefined
-              )}
-              onClick={loadLast}
-            >
-              Load Last Page
-            </button>
-            <button
-              disabled={data.every(
-                (artist) => artist.pagination.next === undefined
-              )}
-              onClick={loadNext}
-            >
-              Load Next Page
-            </button>
+            <ItemGroup>
+              <Button
+                color="rgb(28, 128, 134)"
+                disabled={data.every(
+                  (artist) => artist.pagination.prev === undefined
+                )}
+                onClick={loadLast}
+              >
+                Load Last Page
+              </Button>
+              <div
+                style={{ color: "#fff" }}
+              >{`Search returned ${displayResults.length} records`}</div>
+              <Button
+                color="rgb(28, 128, 134)"
+                disabled={data.every(
+                  (artist) => artist.pagination.next === undefined
+                )}
+                onClick={loadNext}
+              >
+                Load Next Page
+              </Button>
+            </ItemGroup>
             {displayResults.map((release, i) => (
               <ResultCard
                 key={`resultCard-${i}`}
@@ -279,42 +286,6 @@ function App() {
           checked={excludeArtist}
           onChange={toggleArtistExclusion}
         ></input>
-        <div>
-          {displayResults &&
-            displayResults.length > 0 &&
-            displayResults.map((release) => (
-              <>
-                <h3>
-                  {release.artist} - {release.title}, {release.year}.
-                </h3>
-                {release.contributors.map((contributor) => {
-                  return (
-                    <p>
-                      - {contributor.name}{" "}
-                      {contributor.roles.lenth > 0 &&
-                        `(${contributor.roles.join(", ")})`}
-                    </p>
-                  );
-                })}
-              </>
-            ))}
-        </div>
-        <button
-          disabled={data.every(
-            (artist) => artist.pagination.prev === undefined
-          )}
-          onClick={loadLast}
-        >
-          Load Last Page
-        </button>
-        <button
-          disabled={data.every(
-            (artist) => artist.pagination.next === undefined
-          )}
-          onClick={loadNext}
-        >
-          Load Next Page
-        </button>
       </div>
     </>
   );
