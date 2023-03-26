@@ -1,5 +1,5 @@
 import { useState, useEffect, React } from "react";
-import { FaUser, FaRecordVinyl } from "react-icons/fa";
+import { FaUser, FaRecordVinyl, FaCog } from "react-icons/fa";
 import {
   getSearchResult,
   getArtists,
@@ -18,12 +18,14 @@ import { ResultCard } from "./components/ResultCard";
 import { Results } from "./components/styles/ResultCard.styled";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
 import { Button } from "./components/styles/Button.styled";
+import SettingsModal from "./components/SettingsModal";
 
 function App() {
   const [data, setData] = useState([]);
   const [displayResults, setDisplayResults] = useState([]);
   const [excludeArtist, setExcludeArtist] = useState(true);
   const [excludeAlbum, setExcludeAlbum] = useState(true);
+  const [displaySettings, setDisplaySettings] = useState(false);
   const [settings, setSettings] = useState({ fastSearch: true });
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
@@ -277,7 +279,26 @@ function App() {
             ))}
           </Results>
         )}
+        <button
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            padding: 0,
+            height: "1.1em",
+            width: "1.1em",
+            fontSize: "2em",
+            background: "none",
+            border: "none",
+          }}
+        >
+          <FaCog
+            onClick={() => console.log("settings")}
+            style={{ color: "white" }}
+          />
+        </button>
       </ContentWindow>
+      {displaySettings && <SettingsModal />}
 
       <div style={{ display: "none" }}>
         <label>Exlude listings by the same artist</label>
