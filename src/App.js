@@ -23,10 +23,13 @@ import SettingsModal from "./components/SettingsModal";
 function App() {
   const [data, setData] = useState([]);
   const [displayResults, setDisplayResults] = useState([]);
-  const [excludeArtist, setExcludeArtist] = useState(true);
-  const [excludeAlbum, setExcludeAlbum] = useState(true);
   const [displaySettings, setDisplaySettings] = useState(false);
-  const [settings, setSettings] = useState({ fastSearch: true });
+  const [settings, setSettings] = useState({
+    searchType: "fast",
+    excludeArtist: "true",
+    excludeAlbum: "true",
+    excludeVarious: "false",
+  });
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
@@ -46,9 +49,9 @@ function App() {
     }));
   };
 
-  const toggleArtistExclusion = (e) => {
-    e.preventDefault();
-    setExcludeArtist(!excludeArtist);
+  const convertStringToBoolean = (str) => {
+    if (str === "true") return true;
+    else return false;
   };
 
   const bandReleases = async (band, album, fast) => {
@@ -104,21 +107,20 @@ function App() {
   };
 
   const handleSearch = async (method) => {
-    if (!settings.fastSearch) {
-      setInProgress(true);
-    }
+    const fastSearch = settings.searchType === "fast";
+    setInProgress(true);
     let releases;
     switch (method) {
       case "band":
-        releases = await bandReleases(band, album, settings.fastSearch);
+        releases = await bandReleases(band, album, fastSearch);
         break;
 
       case "member":
-        releases = await memberReleases(band, album, settings.fastSearch);
+        releases = await memberReleases(band, album, fastSearch);
         break;
 
       case "contributor":
-        releases = await contributorReleases(band, album, settings.fastSearch);
+        releases = await contributorReleases(band, album, fastSearch);
         break;
 
       default:
@@ -141,6 +143,19 @@ function App() {
     const moreReleases = await loadMore(data, "next", settings.fastSearch);
     setData(moreReleases);
   };
+
+  const toggleSettingsModal = () => {
+    const isOpen = displaySettings;
+    setDisplaySettings(!isOpen);
+  };
+
+  const handleSettingsChange = (newSettings) => {
+    setSettings(newSettings);
+  };
+
+  useEffect(() => {
+    console.log(settings);
+  }, [settings]);
 
   useEffect(() => {
     const displayReleases = new Map();
@@ -165,14 +180,19 @@ function App() {
       });
     });
     let filteredReleases = [...displayReleases.values()];
-    if (excludeArtist) {
+    if (convertStringToBoolean(settings.excludeArtist)) {
       filteredReleases = filteredReleases.filter(
-        (release) => release.artist !== band
+        (release) => release.artist.toLowerCase() !== band.toLowerCase()
       );
     }
-    if (excludeAlbum) {
+    if (convertStringToBoolean(settings.excludeAlbum)) {
       filteredReleases = filteredReleases.filter(
-        (release) => release.title !== album
+        (release) => release.title.toLowerCase() !== album.toLowerCase()
+      );
+    }
+    if (convertStringToBoolean(settings.excludeVarious)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.artist.toLowerCase() !== "various"
       );
     }
 
@@ -181,7 +201,7 @@ function App() {
         .sort((a, b) => b.year - a.year)
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
-  }, [data, excludeArtist, band, album]);
+  }, [data, band, album, settings]);
 
   useEffect(() => {
     async function coolDownAfterFastSearch() {
@@ -292,22 +312,16 @@ function App() {
             border: "none",
           }}
         >
-          <FaCog
-            onClick={() => console.log("settings")}
-            style={{ color: "white" }}
-          />
+          <FaCog onClick={toggleSettingsModal} style={{ color: "white" }} />
         </button>
       </ContentWindow>
-      {displaySettings && <SettingsModal />}
-
-      <div style={{ display: "none" }}>
-        <label>Exlude listings by the same artist</label>
-        <input
-          type="checkbox"
-          checked={excludeArtist}
-          onChange={toggleArtistExclusion}
-        ></input>
-      </div>
+      {displaySettings && (
+        <SettingsModal
+          applySettings={handleSettingsChange}
+          cancelModal={toggleSettingsModal}
+          settings={settings}
+        />
+      )}
     </>
   );
 }
