@@ -249,8 +249,7 @@ function App() {
         <div
           className="upper-search"
           style={{
-            minHeight: "40vh",
-            height: "40vh",
+            height: "50vh",
             display: "flex",
             flexDirection: "row",
           }}
@@ -336,6 +335,7 @@ function App() {
               flexDirection: "column-reverse",
               alignItems: "center",
               justifyContent: "end",
+              marginBottom: "40px",
             }}
           >
             <input
@@ -370,7 +370,15 @@ function App() {
         </div>
         <div
           className="lower-search"
-          style={{ height: "60vh", display: "flex", flexDirection: "row" }}
+          style={{
+            height: "40vh",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-evenly",
+            backgroundColor: "black",
+            color: "white",
+            paddingTop: "30px",
+          }}
         >
           <div>
             <div className="title">
