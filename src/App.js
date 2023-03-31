@@ -29,7 +29,12 @@ function App() {
     excludeArtist: "true",
     excludeAlbum: "true",
     excludeVarious: "false",
+    searchSpeeds: {
+      fast: 0,
+      comprehensive: 3200,
+    },
   });
+  const [message, setMessage] = useState("");
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,38 +59,53 @@ function App() {
     else return false;
   };
 
-  const bandReleases = async (band, album, fast) => {
+  const bandReleases = async (response, fast) => {
+    setMessage("Retrieving album info...");
     const delay = fast ? quickDelay : longDelay;
-    const searchResponse = await getSearchResult(band, album);
-    const release = await fetch(searchResponse.results[0].resource_url).then(
-      (res) => res.json()
-    );
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    let callCount = 2;
-    const artists = await getArtists(release, fast, callCount);
-    console.log(artists);
-    return artists;
-  };
-
-  const memberReleases = async (band, album, fast) => {
-    const delay = fast ? quickDelay : longDelay;
-    const response = await getSearchResult(band, album);
     const release = await fetch(response.results[0].resource_url).then((res) =>
       res.json()
     );
     await new Promise((resolve) => setTimeout(resolve, delay));
     let callCount = 2;
+    setMessage(
+      `Checking releases associated with ${
+        release.artists.length
+      } artist. This will take up to ${
+        (release.artists.length * settings.searchSpeeds[settings.searchType]) /
+          1000 +
+        1
+      } seconds.`
+    );
+    const artists = await getArtists(release, fast, callCount);
+    return artists;
+  };
+
+  const memberReleases = async (response, fast) => {
+    const delay = fast ? quickDelay : longDelay;
+    const release = await fetch(response.results[0].resource_url).then((res) =>
+      res.json()
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    let callCount = 2;
+    setMessage(
+      `Checking releases associated with ${
+        release.artists.length
+      } artist. This may take up to ${
+        (release.artists.length *
+          10 *
+          settings.searchSpeeds[settings.searchType]) /
+          1000 +
+        1
+      } seconds.`
+    );
     const members = await getMembers(release, fast, callCount);
     console.log(members);
     return members;
   };
 
-  const contributorReleases = async (band, album, fast) => {
+  const contributorReleases = async (response, fast) => {
     const delay = fast ? quickDelay : longDelay;
     let callCount = 1;
-
-    const response = await getSearchResult(band, album);
-
     let release;
     for (let i = 0; i < Math.min(5, response.results.length); i++) {
       const nextRelease = await fetch(response.results[i].resource_url).then(
@@ -101,6 +121,16 @@ function App() {
       }
       release = nextRelease;
     }
+    setMessage(
+      `Checking releases associated with ${
+        release.extraartists.length
+      } artist. This may take up to ${
+        (release.extraartists.length *
+          settings.searchSpeeds[settings.searchType]) /
+          1000 +
+        1
+      } seconds.`
+    );
     const contributors = await getContributors(release, fast, callCount);
     console.log(contributors);
     return contributors;
@@ -109,18 +139,21 @@ function App() {
   const handleSearch = async (method) => {
     const fastSearch = settings.searchType === "fast";
     setInProgress(true);
+    setMessage("Searching for album...");
+    const response = await getSearchResult(band, album);
+    setMessage("Album located");
     let releases;
     switch (method) {
       case "band":
-        releases = await bandReleases(band, album, fastSearch);
+        releases = await bandReleases(response, fastSearch);
         break;
 
       case "member":
-        releases = await memberReleases(band, album, fastSearch);
+        releases = await memberReleases(response, fastSearch);
         break;
 
       case "contributor":
-        releases = await contributorReleases(band, album, fastSearch);
+        releases = await contributorReleases(response, fastSearch);
         break;
 
       default:
@@ -129,7 +162,8 @@ function App() {
     }
     setData(releases);
     setInProgress(false);
-    if (settings.fastSearch) {
+    console.log(settings, coolDown);
+    if (settings.searchType === "fast") {
       setCooldown(true);
     }
   };
@@ -152,10 +186,6 @@ function App() {
   const handleSettingsChange = (newSettings) => {
     setSettings(newSettings);
   };
-
-  useEffect(() => {
-    console.log(settings);
-  }, [settings]);
 
   useEffect(() => {
     const displayReleases = new Map();
@@ -204,9 +234,10 @@ function App() {
   }, [data, band, album, settings]);
 
   useEffect(() => {
+    console.log("coolDown effect called. Cooldown is ", coolDown);
     async function coolDownAfterFastSearch() {
       if (coolDown) {
-        await new Promise(() => setTimeout(setCooldown(false), 60000));
+        await new Promise(() => setTimeout(() => setCooldown(false), 60000));
       }
     }
     coolDownAfterFastSearch();
@@ -214,6 +245,160 @@ function App() {
 
   return (
     <>
+      <div className="app" style={{ display: "flex", flexDirection: "column" }}>
+        <div
+          className="upper-search"
+          style={{
+            minHeight: "40vh",
+            height: "40vh",
+            display: "flex",
+            flexDirection: "row",
+          }}
+        >
+          <div
+            className="progress-block"
+            style={{ position: "relative", width: "40vw" }}
+          >
+            <div
+              className="progress-bar"
+              style={{
+                width: "18%",
+                position: "absolute",
+                top: 0,
+                left: "7%",
+                backgroundColor: "black",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
+            </div>
+            <div
+              className="progress-bar"
+              style={{
+                width: "18%",
+                position: "absolute",
+                top: 0,
+                left: "31%",
+                backgroundColor: "black",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
+            </div>
+            <div
+              className="progress-bar"
+              style={{
+                width: "18%",
+                position: "absolute",
+                top: 0,
+                left: "55%",
+                backgroundColor: "black",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
+            </div>
+            <div
+              className="progress-bar"
+              style={{
+                width: "18%",
+                position: "absolute",
+                top: 0,
+                left: "79%",
+                backgroundColor: "black",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
+            </div>
+          </div>
+          <div
+            className="input-block"
+            style={{
+              width: "60vw",
+              display: "flex",
+              flexDirection: "column-reverse",
+              alignItems: "center",
+              justifyContent: "end",
+            }}
+          >
+            <input
+              placeholder="Band"
+              onChange={onChange}
+              name="band"
+              value={band}
+              style={{
+                border: "none",
+                borderBottom: "4px solid black",
+                width: "60%",
+                marginTop: "50px",
+                outline: "none",
+                fontSize: "1.6em",
+              }}
+            ></input>
+            <input
+              placeholder="Album"
+              onChange={onChange}
+              name="album"
+              value={album}
+              style={{
+                border: "none",
+                borderBottom: "4px solid black",
+                width: "60%",
+                marginTop: "50px",
+                outline: "none",
+                fontSize: "1.6em",
+              }}
+            ></input>
+          </div>
+        </div>
+        <div
+          className="lower-search"
+          style={{ height: "60vh", display: "flex", flexDirection: "row" }}
+        >
+          <div>
+            <div className="title">
+              <h1>Artist</h1>
+            </div>
+            <div className="body">Body Text</div>
+            <div className="progress"></div>
+            <button>Search</button>
+          </div>
+          <div>
+            <div className="title">
+              <h1>Members</h1>
+            </div>
+            <div className="body">Body Text</div>
+            <div className="progress"></div>
+            <button>Search</button>
+          </div>
+          <div>
+            <div className="title">
+              <h1>Contributors</h1>
+            </div>
+            <div className="body">Body Text</div>
+            <div className="progress"></div>
+            <button>Search</button>
+          </div>
+        </div>
+        <div className="results"></div>
+      </div>
       <ContentWindow>
         <SearchContainer>
           <ItemGroup>
@@ -241,6 +426,7 @@ function App() {
               color={"rgb(28, 128, 134)"}
               searchFn={() => handleSearch("band")}
               disabled={band === "" || album === ""}
+              coolDown={coolDown}
             ></SearchCard>
             <SearchCard
               title="Members"
@@ -248,6 +434,7 @@ function App() {
               color="rgb(28, 128, 134)"
               searchFn={() => handleSearch("member")}
               disabled={band === "" || album === ""}
+              coolDown={coolDown}
             ></SearchCard>
             <SearchCard
               title="Credited"
@@ -255,6 +442,7 @@ function App() {
               color="rgb(28, 128, 134)"
               searchFn={() => handleSearch("contributor")}
               disabled={band === "" || album === ""}
+              coolDown={coolDown}
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>

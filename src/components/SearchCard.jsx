@@ -1,10 +1,17 @@
 import React from "react";
 import { StyledSearchCard, BorderCard } from "./styles/SearchCard.styled";
 
-export const SearchCard = ({ title, text, color, searchFn, disabled }) => {
+export const SearchCard = ({
+  title,
+  text,
+  color,
+  searchFn,
+  disabled,
+  coolDown,
+}) => {
   return (
     <BorderCard color={color}>
-      <StyledSearchCard color={color} disabled={disabled}>
+      <StyledSearchCard color={color} disabled={disabled} coolDown={coolDown}>
         <div className="title">
           <h1>{title}</h1>
         </div>
@@ -14,6 +21,7 @@ export const SearchCard = ({ title, text, color, searchFn, disabled }) => {
           })}
         </div>
 
+        <div className="progress"></div>
         <button onClick={searchFn} disabled={disabled}>
           Search
         </button>

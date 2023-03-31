@@ -10,6 +10,11 @@ const rotate = keyframes`
   }
 `;
 
+// const coolDown = keyframes`
+//   0% { width: 100%; }
+//   100% { width: 0; }
+// `;
+
 export const BorderCard = styled.div`
   @property --rotate {
     syntax: "<angle>";
@@ -98,11 +103,32 @@ export const StyledSearchCard = styled.div`
     background: none;
     border-radius: 8px;
     transition: 0.3s;
-    opacity: ${(props) => (props.disabled ? 0.01 : 1)};
+    opacity: ${(props) => (props.disabled ? 0.8 : 1)};
   }
 
   button:hover {
-    background: ${(props) => props.color};
+    background: ${(props) => (props.coolDown ? "white" : props.color)};
     color: #fff;
+  }
+
+  .progress {
+    position: absolute;
+    bottom: 7%;
+    left: 5%;
+    height: 15%;
+    width: 90%;
+    color: ${(props) => props.color};
+    padding: none;
+    background: red;
+    border-radius: 8px;
+    transition: 0.3s;
+    opacity: ${(props) => (props.disabled ? 0.2 : 0.4)};
+
+    ${(props) =>
+      props.coolDown &&
+      `
+      width: 0;
+      transition: width 60s linear;
+    `}
   }
 `;
