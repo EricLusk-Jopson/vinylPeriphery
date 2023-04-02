@@ -15,10 +15,8 @@ import { ItemGroup } from "./components/styles/ItemGroup.styled";
 import { Input } from "./components/Input";
 import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
-import { Results } from "./components/styles/ResultCard.styled";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
 import { Button } from "./components/styles/Button.styled";
-import SettingsModal from "./components/SettingsModal";
 
 function App() {
   const [data, setData] = useState([]);
@@ -389,7 +387,7 @@ function App() {
           <div
             className="settings"
             style={{
-              position: "absolute",
+              position: "fixed",
               width: "20vw",
               height: "60vw",
               backgroundColor: "red",
@@ -398,6 +396,7 @@ function App() {
               transformOrigin: "100% 50%",
               rotate: displaySettings ? "0deg" : "83deg",
               zIndex: "10",
+              transition: "rotate 0.35s ease",
             }}
           >
             <div
@@ -532,8 +531,9 @@ function App() {
               band/artist. This is the fastest available search and typically
               yields the smallest set of results.
             </div>
-            <div className="progress"></div>
-            <button onClick={() => handleSearch("band")}>Search</button>
+            <div className="progress" style={{ margin: "1em 0" }}>
+              <button onClick={() => handleSearch("band")}>Search</button>
+            </div>
           </div>
           <div style={{ width: "25%" }}>
             <div className="title">
@@ -544,8 +544,9 @@ function App() {
               members. This search may take longer for large and/or long-running
               groups.
             </div>
-            <div className="progress"></div>
-            <button onClick={() => handleSearch("band")}>Search</button>
+            <div className="progress" style={{ margin: "1em 0" }}>
+              <button onClick={() => handleSearch("member")}>Search</button>
+            </div>
           </div>
           <div style={{ width: "25%" }}>
             <div className="title">
@@ -556,8 +557,11 @@ function App() {
               artists, including session musicians. This search may take over a
               minute to perform.
             </div>
-            <div className="progress"></div>
-            <button onClick={() => handleSearch("band")}>Search</button>
+            <div className="progress" style={{ margin: "1em 0" }}>
+              <button onClick={() => handleSearch("contributor")}>
+                Search
+              </button>
+            </div>
           </div>
         </div>
         <div
@@ -647,7 +651,7 @@ function App() {
         </div>
       </div>
 
-      <ContentWindow>
+      {/* <ContentWindow>
         <SearchContainer>
           <ItemGroup>
             <Input
@@ -694,14 +698,7 @@ function App() {
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>
-      </ContentWindow>
-      {/* {displaySettings && (
-        <SettingsModal
-          applySettings={handleSettingsChange}
-          cancelModal={toggleSettingsModal}
-          settings={settings}
-        />
-      )} */}
+      </ContentWindow> */}
     </>
   );
 }

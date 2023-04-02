@@ -10,11 +10,9 @@ export const Results = styled.div`
 
 export const StyledResultCard = styled.div`
   width: 100%;
-  border-radius: 20px;
   margin: 10px 0px;
-  background: rgba(2, 0, 36, 1);
-  border: 2px solid rgba(88, 199, 250, 1);
-  color: rgba(88, 199, 250, 1);
+  color: white;
+  border-bottom: 1px solid white;
 `;
 
 export const StyledHeader = styled.div`
@@ -23,9 +21,6 @@ export const StyledHeader = styled.div`
   grid-template-rows: 2rem 1.6rem;
   align-items: center;
   padding: 0px 20px;
-  border-radius: 20px
-  background: rgba(2, 0, 36, 1);
-  color: rgba(88, 199, 250, 1);
 `;
 
 export const H1 = styled.h1`
