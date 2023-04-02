@@ -183,8 +183,9 @@ function App() {
     setDisplaySettings(!isOpen);
   };
 
-  const handleSettingsChange = (newSettings) => {
-    setSettings(newSettings);
+  const handleSettingsChange = (e) => {
+    e.preventDefault();
+    setSettings({ ...settings, [e.target.name]: e.target.value });
   };
 
   useEffect(() => {
@@ -243,12 +244,28 @@ function App() {
     coolDownAfterFastSearch();
   }, [coolDown]);
 
+  useEffect(() => {
+    console.log(band, album);
+  }, [band, album]);
+
   return (
     <>
-      <div className="app" style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        className="app"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          overflowX: "hidden",
+        }}
+      >
+        <div
+          className="red-angle"
+          style={{ position: "absolute", top: 0, left: 0 }}
+        ></div>
         <div
           className="upper-search"
           style={{
+            position: "relative",
             height: "50vh",
             display: "flex",
             flexDirection: "row",
@@ -335,7 +352,7 @@ function App() {
               flexDirection: "column-reverse",
               alignItems: "center",
               justifyContent: "end",
-              marginBottom: "40px",
+              marginBottom: "60px",
             }}
           >
             <input
@@ -350,6 +367,7 @@ function App() {
                 marginTop: "50px",
                 outline: "none",
                 fontSize: "1.6em",
+                zIndex: 2,
               }}
             ></input>
             <input
@@ -364,8 +382,132 @@ function App() {
                 marginTop: "50px",
                 outline: "none",
                 fontSize: "1.6em",
+                zIndex: 2,
               }}
             ></input>
+          </div>
+          <div
+            className="settings"
+            style={{
+              position: "absolute",
+              width: "20vw",
+              height: "60vw",
+              backgroundColor: "red",
+              top: "-30vw",
+              left: "65%",
+              transformOrigin: "100% 50%",
+              rotate: displaySettings ? "0deg" : "83deg",
+              zIndex: "10",
+            }}
+          >
+            <div
+              className="settings-block"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-evenly",
+                // alignItems: "left",
+                position: "absolute",
+                left: 0,
+                top: "50%",
+                width: "80%",
+                height: "30%",
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label>Search Type</label>
+                <select
+                  name="searchType"
+                  value={settings.searchType}
+                  onChange={handleSettingsChange}
+                >
+                  <option value="fast">Fast</option>
+                  <option value="comprehensive">Comprehensive</option>
+                </select>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label>Exclude Searched Artist</label>
+                <select
+                  name="excludeArtist"
+                  value={settings.excludeArtist}
+                  onChange={handleSettingsChange}
+                >
+                  <option value={true}>Yes</option>
+                  <option value={false}>No</option>
+                </select>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label>Exclude Searched Album</label>
+                <select
+                  name="excludeAlbum"
+                  value={settings.excludeAlbum}
+                  onChange={handleSettingsChange}
+                >
+                  <option value={true}>Yes</option>
+                  <option value={false}>No</option>
+                </select>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label>Exclude Various</label>
+                <select
+                  name="excludeVarious"
+                  value={settings.excludeVarious}
+                  onChange={handleSettingsChange}
+                >
+                  <option value={true}>Yes</option>
+                  <option value={false}>No</option>
+                </select>
+              </div>
+            </div>
+            <div
+              className="button-block"
+              style={{
+                position: "absolute",
+                bottom: 0,
+                right: 0,
+                padding: 0,
+                zIndex: "11",
+              }}
+            >
+              <button
+                onClick={toggleSettingsModal}
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  padding: 0,
+                  fontSize: "3vw",
+                  background: "none",
+                  border: "none",
+                  color: "white",
+                  margin: 0,
+                  transformOrigin: "0% 100%",
+                  rotate: "-90deg",
+                }}
+              >
+                Settings
+              </button>
+            </div>
           </div>
         </div>
         <div
@@ -378,35 +520,133 @@ function App() {
             backgroundColor: "black",
             color: "white",
             paddingTop: "30px",
+            boxSizing: "border-box",
           }}
         >
-          <div>
+          <div style={{ width: "25%" }}>
             <div className="title">
               <h1>Artist</h1>
             </div>
-            <div className="body">Body Text</div>
+            <div className="body">
+              Returns a collection of all releases associated with the
+              band/artist. This is the fastest available search and typically
+              yields the smallest set of results.
+            </div>
             <div className="progress"></div>
-            <button>Search</button>
+            <button onClick={() => handleSearch("band")}>Search</button>
           </div>
-          <div>
+          <div style={{ width: "25%" }}>
             <div className="title">
               <h1>Members</h1>
             </div>
-            <div className="body">Body Text</div>
+            <div className="body">
+              Returns a collection of all releases from each of the band's
+              members. This search may take longer for large and/or long-running
+              groups.
+            </div>
             <div className="progress"></div>
-            <button>Search</button>
+            <button onClick={() => handleSearch("band")}>Search</button>
           </div>
-          <div>
+          <div style={{ width: "25%" }}>
             <div className="title">
               <h1>Contributors</h1>
             </div>
-            <div className="body">Body Text</div>
+            <div className="body">
+              Returns all releases associated with the record's credited
+              artists, including session musicians. This search may take over a
+              minute to perform.
+            </div>
             <div className="progress"></div>
-            <button>Search</button>
+            <button onClick={() => handleSearch("band")}>Search</button>
           </div>
         </div>
-        <div className="results"></div>
+        <div
+          className="results"
+          style={{
+            minHeight: "10vh",
+            backgroundColor: "black",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          {displayResults && displayResults.length > 0 && (
+            <div
+              style={{
+                width: "70%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "10vh",
+                  fontSize: "1em",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <button
+                  disabled={data.every(
+                    (artist) => artist.pagination.prev === undefined
+                  )}
+                  onClick={loadLast}
+                  style={{
+                    border: "none",
+                    backgroundColor: "unset",
+                    color: "white",
+                    fontSize: "1em",
+                    padding: 0,
+                    margin: "0px 20px",
+                  }}
+                >
+                  Last
+                </button>
+                <div
+                  style={{ color: "#fff" }}
+                >{`Search returned ${displayResults.length} records`}</div>
+                <Button
+                  disabled={data.every(
+                    (artist) => artist.pagination.next === undefined
+                  )}
+                  onClick={loadNext}
+                  style={{
+                    border: "none",
+                    backgroundColor: "unset",
+                    color: "white",
+                    fontSize: "1em",
+                    padding: 0,
+                    margin: "0px 20px",
+                  }}
+                >
+                  Next
+                </Button>
+              </div>
+              {displayResults.map((release, i) => (
+                <ResultCard
+                  key={`resultCard-${i}`}
+                  title={release.title}
+                  artist={release.artist}
+                  body={release.contributors.map(
+                    (contributor) =>
+                      contributor.name +
+                      (contributor.roles.length > 0 &&
+                      contributor.roles[0] !== ""
+                        ? ` (${contributor.roles.join(", ")})`
+                        : "")
+                  )}
+                ></ResultCard>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
       <ContentWindow>
         <SearchContainer>
           <ItemGroup>
@@ -454,70 +694,14 @@ function App() {
             ></SearchCard>
           </ItemGroup>
         </SearchContainer>
-        {displayResults && displayResults.length > 0 && (
-          <Results>
-            <ItemGroup>
-              <Button
-                color="rgb(28, 128, 134)"
-                disabled={data.every(
-                  (artist) => artist.pagination.prev === undefined
-                )}
-                onClick={loadLast}
-              >
-                Load Last Page
-              </Button>
-              <div
-                style={{ color: "#fff" }}
-              >{`Search returned ${displayResults.length} records`}</div>
-              <Button
-                color="rgb(28, 128, 134)"
-                disabled={data.every(
-                  (artist) => artist.pagination.next === undefined
-                )}
-                onClick={loadNext}
-              >
-                Load Next Page
-              </Button>
-            </ItemGroup>
-            {displayResults.map((release, i) => (
-              <ResultCard
-                key={`resultCard-${i}`}
-                title={release.title}
-                artist={release.artist}
-                body={release.contributors.map(
-                  (contributor) =>
-                    contributor.name +
-                    (contributor.roles.length > 0 && contributor.roles[0] !== ""
-                      ? ` (${contributor.roles.join(", ")})`
-                      : "")
-                )}
-              ></ResultCard>
-            ))}
-          </Results>
-        )}
-        <button
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            padding: 0,
-            height: "1.1em",
-            width: "1.1em",
-            fontSize: "2em",
-            background: "none",
-            border: "none",
-          }}
-        >
-          <FaCog onClick={toggleSettingsModal} style={{ color: "white" }} />
-        </button>
       </ContentWindow>
-      {displaySettings && (
+      {/* {displaySettings && (
         <SettingsModal
           applySettings={handleSettingsChange}
           cancelModal={toggleSettingsModal}
           settings={settings}
         />
-      )}
+      )} */}
     </>
   );
 }
