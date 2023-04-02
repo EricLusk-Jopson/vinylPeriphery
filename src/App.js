@@ -405,7 +405,6 @@ function App() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-evenly",
-                // alignItems: "left",
                 position: "absolute",
                 left: 0,
                 top: "50%",
