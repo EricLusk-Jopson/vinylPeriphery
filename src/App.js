@@ -11,9 +11,6 @@ import {
   ContentWindow,
   SearchContainer,
 } from "./components/styles/ContentWindow.styled";
-import { ItemGroup } from "./components/styles/ItemGroup.styled";
-import { Input } from "./components/Input";
-import { SearchCard } from "./components/SearchCard";
 import { ResultCard } from "./components/ResultCard";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
 import { Button } from "./components/styles/Button.styled";
@@ -32,6 +29,8 @@ function App() {
       comprehensive: 3200,
     },
   });
+  const [loadingArtist, setLoadingArtist] = useState(false);
+  const [loadTimeArtist, setLoadTimeArtist] = useState(1);
   const [message, setMessage] = useState("");
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
@@ -179,6 +178,8 @@ function App() {
   const toggleSettingsModal = () => {
     const isOpen = displaySettings;
     setDisplaySettings(!isOpen);
+    setLoadTimeArtist(Math.random() * 5);
+    setLoadingArtist(!loadingArtist);
   };
 
   const handleSettingsChange = (e) => {
@@ -286,10 +287,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -86%)",
+                transform: "translate(0%, -96%)",
               }}
             >
-              <p>S</p> <p>T</p> <p>S</p> <p>I</p> <p>T</p> <p>R</p> <p>A</p>
+              <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
             </div>
             <div
               className="progress-bar"
@@ -304,10 +305,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -86%)",
+                transform: "translate(0%, -96%)",
               }}
             >
-              <p>S</p> <p>R</p> <p>E</p> <p>B</p> <p>M</p> <p>E</p> <p>M</p>
+              <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
             </div>
             <div
               className="progress-bar"
@@ -322,10 +323,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -86%)",
+                transform: "translate(0%, -96%)",
               }}
             >
-              <p>S</p> <p>T</p> <p>I</p> <p>D</p> <p>E</p> <p>R</p> <p>C</p>
+              <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
             </div>
             <div
               className="progress-bar"
@@ -340,10 +341,13 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -86%)",
+                transform: `${
+                  loadingArtist ? "translate(0, 0)" : "translate(0%, -96%)"
+                }`,
+                transition: `transform ${loadTimeArtist}s`,
               }}
             >
-              <p>S</p> <p>D</p> <p>R</p> <p>O</p> <p>C</p> <p>E</p> <p>R</p>
+              <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
             </div>
           </div>
           <div
