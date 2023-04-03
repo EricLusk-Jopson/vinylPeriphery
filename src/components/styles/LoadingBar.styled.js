@@ -1,5 +1,12 @@
 import styled, { css, keyframes } from "styled-components";
 
+export const StyledLoadingBarWrapper = styled.div`
+  width: 40vw;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1vw;
+`;
+
 export const StyledLoadingBar = styled.div`
   background-color: black;
   color: white;
@@ -34,13 +41,9 @@ const anim = css`
   animation: 1s ${colorChange} 0.1s infinite;
 `;
 
-const complete = css`
-  color: green;
-`;
-
 export const StyledLetter = styled.p`
   margin: 0;
   ${(props) => props.isLoading && anim}
 
-  ${(props) => props.isComplete && "color: green;"}
+  ${(props) => props.isComplete && "color: red;"}
 `;

@@ -9,6 +9,7 @@ import {
 import { ResultCard } from "./components/ResultCard";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
+import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -268,21 +269,13 @@ function App() {
             flexDirection: "row",
           }}
         >
-          <div
-            className="progress-block"
-            style={{
-              width: "40vw",
-              display: "flex",
-              justifyContent: "space-between",
-              padding: "0 1vw",
-            }}
-          >
+          <StyledLoadingBarWrapper className="progress-block">
             <LoadingBar isLoading={false} isComplete={false} text="CONNECT" />
             <LoadingBar isLoading={false} isComplete={false} text="ARTISTS" />
             <LoadingBar isLoading={false} isComplete={false} text="MEMBERS" />
             <LoadingBar isLoading={false} isComplete={true} text="CREDITS" />
             <LoadingBar isLoading={true} isComplete={false} text="RECORDS" />
-          </div>
+          </StyledLoadingBarWrapper>
           <div
             className="input-block"
             style={{
