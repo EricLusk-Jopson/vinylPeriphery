@@ -29,6 +29,12 @@ function App() {
       comprehensive: 3200,
     },
   });
+  const [loadingInfo, setLoadingInfo] = useState({
+    artists: { isLoading: false, loadingTime: 1 },
+    members: { isLoading: false, loadingTime: 1 },
+    credits: { isLoading: false, loadingTime: 1 },
+    records: { isLoading: false, loadingTime: 1 },
+  });
   const [loadingArtist, setLoadingArtist] = useState(false);
   const [loadTimeArtist, setLoadTimeArtist] = useState(1);
   const [message, setMessage] = useState("");
@@ -178,8 +184,12 @@ function App() {
   const toggleSettingsModal = () => {
     const isOpen = displaySettings;
     setDisplaySettings(!isOpen);
-    setLoadTimeArtist(Math.random() * 5);
-    setLoadingArtist(!loadingArtist);
+    const temp = {
+      ...loadingInfo,
+      artists: { isLoading: !loadingInfo.artists.isLoading, loadingTime: 3 },
+    };
+    console.log(temp);
+    setLoadingInfo(temp);
   };
 
   const handleSettingsChange = (e) => {
@@ -287,7 +297,16 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -96%)",
+                transform: `${
+                  loadingInfo.artists.isLoading
+                    ? "translate(0, 0)"
+                    : "translate(0%, -96%)"
+                }`,
+                transition: `transform ${
+                  loadingInfo.artists.isLoading
+                    ? loadingInfo.artists.loadingTime
+                    : 1
+                }s linear`,
               }}
             >
               <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
@@ -305,7 +324,16 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -96%)",
+                transform: `${
+                  loadingInfo.members.isLoading
+                    ? "translate(0, 0)"
+                    : "translate(0%, -96%)"
+                }`,
+                transition: `transform ${
+                  loadingInfo.members.isLoading
+                    ? loadingInfo.members.loadingTime
+                    : 1
+                }s linear`,
               }}
             >
               <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
@@ -323,7 +351,16 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: "translate(0%, -96%)",
+                transform: `${
+                  loadingInfo.credits.isLoading
+                    ? "translate(0, 0)"
+                    : "translate(0%, -96%)"
+                }`,
+                transition: `transform ${
+                  loadingInfo.credits.isLoading
+                    ? loadingInfo.credits.loadingTime
+                    : 1
+                }s linear`,
               }}
             >
               <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
@@ -342,9 +379,15 @@ function App() {
                 color: "white",
                 fontWeight: "bold",
                 transform: `${
-                  loadingArtist ? "translate(0, 0)" : "translate(0%, -96%)"
+                  loadingInfo.records.isLoading
+                    ? "translate(0, 0)"
+                    : "translate(0%, -96%)"
                 }`,
-                transition: `transform ${loadTimeArtist}s`,
+                transition: `transform ${
+                  loadingInfo.records.isLoading
+                    ? loadingInfo.records.loadingTime
+                    : 1
+                }s linear`,
               }}
             >
               <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
