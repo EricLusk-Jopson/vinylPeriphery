@@ -278,7 +278,7 @@ function App() {
               style={{
                 width: "18%",
                 position: "absolute",
-                top: 0,
+                top: "0",
                 left: "7%",
                 backgroundColor: "black",
                 display: "flex",
@@ -286,9 +286,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
+                transform: "translate(0%, -86%)",
               }}
             >
-              <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
+              <p>S</p> <p>T</p> <p>S</p> <p>I</p> <p>T</p> <p>R</p> <p>A</p>
             </div>
             <div
               className="progress-bar"
@@ -303,9 +304,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
+                transform: "translate(0%, -86%)",
               }}
             >
-              <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
+              <p>S</p> <p>R</p> <p>E</p> <p>B</p> <p>M</p> <p>E</p> <p>M</p>
             </div>
             <div
               className="progress-bar"
@@ -320,9 +322,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
+                transform: "translate(0%, -86%)",
               }}
             >
-              <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
+              <p>S</p> <p>T</p> <p>I</p> <p>D</p> <p>E</p> <p>R</p> <p>C</p>
             </div>
             <div
               className="progress-bar"
@@ -337,9 +340,10 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
+                transform: "translate(0%, -86%)",
               }}
             >
-              <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
+              <p>S</p> <p>D</p> <p>R</p> <p>O</p> <p>C</p> <p>E</p> <p>R</p>
             </div>
           </div>
           <div
