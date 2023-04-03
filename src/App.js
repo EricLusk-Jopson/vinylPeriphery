@@ -8,6 +8,7 @@ import {
 } from "./helpers/asyncCalls";
 import { ResultCard } from "./components/ResultCard";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
+import LoadingBar from "./components/LoadingBar";
 
 function App() {
   const [data, setData] = useState([]);
@@ -269,95 +270,18 @@ function App() {
         >
           <div
             className="progress-block"
-            style={{ position: "relative", width: "40vw" }}
+            style={{
+              width: "40vw",
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "0 1vw",
+            }}
           >
-            <div
-              className="progress-bar"
-              style={{
-                width: "18%",
-                position: "absolute",
-                top: "0",
-                left: "7%",
-                backgroundColor: "black",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                color: "white",
-                fontWeight: "bold",
-              }}
-            >
-              <p
-                style={{
-                  color: `${
-                    (7 * currentArtist) / totalArtist > 1 ? "red" : "white"
-                  }`,
-                }}
-              >
-                A
-              </p>{" "}
-              <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
-            </div>
-            <div
-              className="progress-bar"
-              style={{
-                width: "18%",
-                position: "absolute",
-                top: 0,
-                left: "31%",
-                backgroundColor: "black",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                color: "white",
-                fontWeight: "bold",
-              }}
-            >
-              <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
-            </div>
-            <div
-              className="progress-bar"
-              style={{
-                width: "18%",
-                position: "absolute",
-                top: 0,
-                left: "55%",
-                backgroundColor: "black",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                color: "white",
-                fontWeight: "bold",
-              }}
-            >
-              <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
-            </div>
-            <div
-              className="progress-bar"
-              style={{
-                width: "18%",
-                position: "absolute",
-                top: 0,
-                left: "79%",
-                backgroundColor: "black",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                color: "white",
-                fontWeight: "bold",
-                // transform: `${
-                //   loadingInfo.records.isLoading
-                //     ? `translate(0%, 0%)`
-                //     : "translate(0%, -96%)"
-                // }`,
-                // transition: `transform ${
-                //   loadingInfo.records.isLoading
-                //     ? loadingInfo.records.loadingTime
-                //     : settings.coolDownRate[settings.searchType]
-                // }s linear`,
-              }}
-            >
-              <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
-            </div>
+            <LoadingBar isLoading={false} isComplete={false} text="CONNECT" />
+            <LoadingBar isLoading={false} isComplete={false} text="ARTISTS" />
+            <LoadingBar isLoading={false} isComplete={false} text="MEMBERS" />
+            <LoadingBar isLoading={false} isComplete={true} text="CREDITS" />
+            <LoadingBar isLoading={true} isComplete={false} text="RECORDS" />
           </div>
           <div
             className="input-block"
