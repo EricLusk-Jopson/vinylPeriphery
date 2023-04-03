@@ -1,3 +1,6 @@
+replace loading bars but have them the text be coloured red as it loads
+do not return until loading bars are finished loading
+
 animate loading bar descent on individual calls
 transition colour loading bar text red if they are relevant to the search
 add cursed test to section behind loading bars

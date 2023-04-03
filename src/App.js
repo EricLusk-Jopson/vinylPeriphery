@@ -20,8 +20,12 @@ function App() {
     excludeAlbum: "true",
     excludeVarious: "false",
     searchSpeeds: {
-      fast: 0,
-      comprehensive: 3200,
+      fast: 0.1,
+      comprehensive: 3.2,
+    },
+    coolDownRate: {
+      fast: 55,
+      comprehensive: 3.2,
     },
   });
   const [loadingInfo, setLoadingInfo] = useState({
@@ -30,8 +34,6 @@ function App() {
     credits: { isLoading: false, loadingTime: 1 },
     records: { isLoading: false, loadingTime: 1 },
   });
-  const [loadingArtist, setLoadingArtist] = useState(false);
-  const [loadTimeArtist, setLoadTimeArtist] = useState(1);
   const [message, setMessage] = useState("");
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
@@ -40,6 +42,7 @@ function App() {
     album: "",
   });
   const { band, album } = formData;
+  const [progress, setProgress] = useState(0);
 
   const consumer_key = "owJjvljKmrcdSbXFVPTu";
   const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
@@ -74,6 +77,23 @@ function App() {
         1
       } seconds.`
     );
+    const temp = {
+      ...loadingInfo,
+      artists: {
+        isLoading: !loadingInfo.artists.isLoading,
+        loadingTime:
+          (release.artists.length + 1) *
+          settings.searchSpeeds[settings.searchType],
+      },
+      records: {
+        isLoading: !loadingInfo.records.isLoading,
+        loadingTime:
+          (2 * release.artists.length + 1) *
+          settings.searchSpeeds[settings.searchType],
+      },
+    };
+    console.log(temp);
+    setLoadingInfo(temp);
     const artists = await getArtists(release, fast, callCount);
     return artists;
   };
@@ -166,6 +186,27 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const delayedLoadCancellation = async () => {
+      await new Promise((response) => setTimeout(response, 3000));
+      const temp = {
+        ...loadingInfo,
+        artists: {
+          isLoading: false,
+        },
+        records: {
+          isLoading: false,
+        },
+      };
+      setLoadingInfo({
+        ...temp,
+        artists: { ...temp.artists, isLoading: false, loadingTime: 1 },
+        records: { ...temp.records, isLoading: false, loadingTime: 1 },
+      });
+    };
+    delayedLoadCancellation();
+  }, [data]);
+
   const loadLast = async () => {
     const moreReleases = await loadMore(data, "prev", settings.fastSearch);
     setData(moreReleases);
@@ -176,15 +217,9 @@ function App() {
     setData(moreReleases);
   };
 
-  const toggleSettingsModal = () => {
+  const toggleSettingsModal = async () => {
     const isOpen = displaySettings;
     setDisplaySettings(!isOpen);
-    const temp = {
-      ...loadingInfo,
-      artists: { isLoading: !loadingInfo.artists.isLoading, loadingTime: 3 },
-    };
-    console.log(temp);
-    setLoadingInfo(temp);
   };
 
   const handleSettingsChange = (e) => {
@@ -298,10 +333,13 @@ function App() {
                     : "translate(0%, -96%)"
                 }`,
                 transition: `transform ${
-                  loadingInfo.artists.isLoading
-                    ? loadingInfo.artists.loadingTime
-                    : 1
+                  loadingInfo.records.isLoading
+                    ? loadingInfo.records.loadingTime
+                    : settings.coolDownRate[settings.searchType]
                 }s linear`,
+                // transitionDelay: `${
+                //   loadingInfo.records.isLoading ? "0s" : "5s"
+                // }`,
               }}
             >
               <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
@@ -325,9 +363,9 @@ function App() {
                     : "translate(0%, -96%)"
                 }`,
                 transition: `transform ${
-                  loadingInfo.members.isLoading
-                    ? loadingInfo.members.loadingTime
-                    : 1
+                  loadingInfo.records.isLoading
+                    ? loadingInfo.records.loadingTime
+                    : settings.coolDownRate[settings.searchType]
                 }s linear`,
               }}
             >
@@ -352,9 +390,9 @@ function App() {
                     : "translate(0%, -96%)"
                 }`,
                 transition: `transform ${
-                  loadingInfo.credits.isLoading
-                    ? loadingInfo.credits.loadingTime
-                    : 1
+                  loadingInfo.records.isLoading
+                    ? loadingInfo.records.loadingTime
+                    : settings.coolDownRate[settings.searchType]
                 }s linear`,
               }}
             >
@@ -375,13 +413,13 @@ function App() {
                 fontWeight: "bold",
                 transform: `${
                   loadingInfo.records.isLoading
-                    ? "translate(0, 0)"
+                    ? `translate(0%, 0%)`
                     : "translate(0%, -96%)"
                 }`,
                 transition: `transform ${
                   loadingInfo.records.isLoading
                     ? loadingInfo.records.loadingTime
-                    : 1
+                    : settings.coolDownRate[settings.searchType]
                 }s linear`,
               }}
             >
