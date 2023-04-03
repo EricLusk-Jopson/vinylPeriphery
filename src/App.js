@@ -8,7 +8,6 @@ import {
 } from "./helpers/asyncCalls";
 import { ResultCard } from "./components/ResultCard";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
-import { Button } from "./components/styles/Button.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -28,12 +27,8 @@ function App() {
       comprehensive: 3.2,
     },
   });
-  const [loadingInfo, setLoadingInfo] = useState({
-    artists: { isLoading: false, loadingTime: 1 },
-    members: { isLoading: false, loadingTime: 1 },
-    credits: { isLoading: false, loadingTime: 1 },
-    records: { isLoading: false, loadingTime: 1 },
-  });
+  const [currentArtist, setCurrentArtist] = useState(0);
+  const [totalArtist, setTotalArtist] = useState(0);
   const [message, setMessage] = useState("");
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
@@ -77,23 +72,6 @@ function App() {
         1
       } seconds.`
     );
-    const temp = {
-      ...loadingInfo,
-      artists: {
-        isLoading: !loadingInfo.artists.isLoading,
-        loadingTime:
-          (release.artists.length + 1) *
-          settings.searchSpeeds[settings.searchType],
-      },
-      records: {
-        isLoading: !loadingInfo.records.isLoading,
-        loadingTime:
-          (2 * release.artists.length + 1) *
-          settings.searchSpeeds[settings.searchType],
-      },
-    };
-    console.log(temp);
-    setLoadingInfo(temp);
     const artists = await getArtists(release, fast, callCount);
     return artists;
   };
@@ -185,27 +163,6 @@ function App() {
       setCooldown(true);
     }
   };
-
-  useEffect(() => {
-    const delayedLoadCancellation = async () => {
-      await new Promise((response) => setTimeout(response, 3000));
-      const temp = {
-        ...loadingInfo,
-        artists: {
-          isLoading: false,
-        },
-        records: {
-          isLoading: false,
-        },
-      };
-      setLoadingInfo({
-        ...temp,
-        artists: { ...temp.artists, isLoading: false, loadingTime: 1 },
-        records: { ...temp.records, isLoading: false, loadingTime: 1 },
-      });
-    };
-    delayedLoadCancellation();
-  }, [data]);
 
   const loadLast = async () => {
     const moreReleases = await loadMore(data, "prev", settings.fastSearch);
@@ -327,22 +284,18 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: `${
-                  loadingInfo.artists.isLoading
-                    ? "translate(0, 0)"
-                    : "translate(0%, -96%)"
-                }`,
-                transition: `transform ${
-                  loadingInfo.records.isLoading
-                    ? loadingInfo.records.loadingTime
-                    : settings.coolDownRate[settings.searchType]
-                }s linear`,
-                // transitionDelay: `${
-                //   loadingInfo.records.isLoading ? "0s" : "5s"
-                // }`,
               }}
             >
-              <p>A</p> <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
+              <p
+                style={{
+                  color: `${
+                    (7 * currentArtist) / totalArtist > 1 ? "red" : "white"
+                  }`,
+                }}
+              >
+                A
+              </p>{" "}
+              <p>R</p> <p>T</p> <p>I</p> <p>S</p> <p>T</p> <p>S</p>
             </div>
             <div
               className="progress-bar"
@@ -357,16 +310,6 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: `${
-                  loadingInfo.members.isLoading
-                    ? "translate(0, 0)"
-                    : "translate(0%, -96%)"
-                }`,
-                transition: `transform ${
-                  loadingInfo.records.isLoading
-                    ? loadingInfo.records.loadingTime
-                    : settings.coolDownRate[settings.searchType]
-                }s linear`,
               }}
             >
               <p>M</p> <p>E</p> <p>M</p> <p>B</p> <p>E</p> <p>R</p> <p>S</p>
@@ -384,16 +327,6 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: `${
-                  loadingInfo.credits.isLoading
-                    ? "translate(0, 0)"
-                    : "translate(0%, -96%)"
-                }`,
-                transition: `transform ${
-                  loadingInfo.records.isLoading
-                    ? loadingInfo.records.loadingTime
-                    : settings.coolDownRate[settings.searchType]
-                }s linear`,
               }}
             >
               <p>C</p> <p>R</p> <p>E</p> <p>D</p> <p>I</p> <p>T</p> <p>S</p>
@@ -411,16 +344,16 @@ function App() {
                 alignItems: "center",
                 color: "white",
                 fontWeight: "bold",
-                transform: `${
-                  loadingInfo.records.isLoading
-                    ? `translate(0%, 0%)`
-                    : "translate(0%, -96%)"
-                }`,
-                transition: `transform ${
-                  loadingInfo.records.isLoading
-                    ? loadingInfo.records.loadingTime
-                    : settings.coolDownRate[settings.searchType]
-                }s linear`,
+                // transform: `${
+                //   loadingInfo.records.isLoading
+                //     ? `translate(0%, 0%)`
+                //     : "translate(0%, -96%)"
+                // }`,
+                // transition: `transform ${
+                //   loadingInfo.records.isLoading
+                //     ? loadingInfo.records.loadingTime
+                //     : settings.coolDownRate[settings.searchType]
+                // }s linear`,
               }}
             >
               <p>R</p> <p>E</p> <p>C</p> <p>O</p> <p>R</p> <p>D</p> <p>S</p>
@@ -697,7 +630,7 @@ function App() {
                 <div
                   style={{ color: "#fff" }}
                 >{`Search returned ${displayResults.length} records`}</div>
-                <Button
+                <button
                   disabled={data.every(
                     (artist) => artist.pagination.next === undefined
                   )}
@@ -712,7 +645,7 @@ function App() {
                   }}
                 >
                   Next
-                </Button>
+                </button>
               </div>
               {displayResults.map((release, i) => (
                 <ResultCard
@@ -733,55 +666,6 @@ function App() {
           )}
         </div>
       </div>
-
-      {/* <ContentWindow>
-        <SearchContainer>
-          <ItemGroup>
-            <Input
-              icon={<FaUser />}
-              text="Band"
-              placeholder="Viagra Boys"
-              onChange={onChange}
-              name="band"
-              value={band}
-            ></Input>
-            <Input
-              icon={<FaRecordVinyl />}
-              text="Album"
-              placeholder="Cave World"
-              onChange={onChange}
-              name="album"
-              value={album}
-            ></Input>
-          </ItemGroup>
-          <ItemGroup>
-            <SearchCard
-              title="Band"
-              text="Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results."
-              color={"rgb(28, 128, 134)"}
-              searchFn={() => handleSearch("band")}
-              disabled={band === "" || album === ""}
-              coolDown={coolDown}
-            ></SearchCard>
-            <SearchCard
-              title="Members"
-              text="Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups."
-              color="rgb(28, 128, 134)"
-              searchFn={() => handleSearch("member")}
-              disabled={band === "" || album === ""}
-              coolDown={coolDown}
-            ></SearchCard>
-            <SearchCard
-              title="Credited"
-              text="Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform."
-              color="rgb(28, 128, 134)"
-              searchFn={() => handleSearch("contributor")}
-              disabled={band === "" || album === ""}
-              coolDown={coolDown}
-            ></SearchCard>
-          </ItemGroup>
-        </SearchContainer>
-      </ContentWindow> */}
     </>
   );
 }

@@ -1,11 +1,9 @@
 import { useState, React } from "react";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
-
 import {
   StyledResultCard,
   StyledHeader,
   StyledBody,
-  H1,
   Icon,
 } from "./styles/ResultCard.styled";
 
