@@ -1,5 +1,4 @@
 import { useState, useEffect, React } from "react";
-import { FaUser, FaRecordVinyl, FaCog } from "react-icons/fa";
 import {
   getSearchResult,
   getArtists,
@@ -7,10 +6,6 @@ import {
   getContributors,
   loadMore,
 } from "./helpers/asyncCalls";
-import {
-  ContentWindow,
-  SearchContainer,
-} from "./components/styles/ContentWindow.styled";
 import { ResultCard } from "./components/ResultCard";
 import { quickDelay, longDelay } from "./helpers/magicNumbers";
 import { Button } from "./components/styles/Button.styled";
