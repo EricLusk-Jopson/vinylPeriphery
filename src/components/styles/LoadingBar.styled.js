@@ -38,7 +38,7 @@ const colorChange = keyframes`
 `;
 
 const anim = css`
-  animation: 1s ${colorChange} 0.1s infinite;
+  animation: 2s ${colorChange} ${(props) => props.delay * 0.1}s infinite;
 `;
 
 export const StyledLetter = styled.p`
