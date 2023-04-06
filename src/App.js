@@ -29,8 +29,13 @@ function App() {
       comprehensive: 3.2,
     },
   });
-  const [currentArtist, setCurrentArtist] = useState(0);
-  const [totalArtist, setTotalArtist] = useState(0);
+  const [loadingStates, setLoadingStates] = useState({
+    connect: { isLoading: false, isComplete: false },
+    artists: { isLoading: false, isComplete: false },
+    members: { isLoading: false, isComplete: false },
+    credits: { isLoading: false, isComplete: false },
+    records: { isLoading: false, isComplete: false },
+  });
   const [message, setMessage] = useState("");
   const [inProgress, setInProgress] = useState(false);
   const [coolDown, setCooldown] = useState(false);
@@ -134,35 +139,56 @@ function App() {
     return contributors;
   };
 
+  const updateLoadingState = (categrory, isLoading, isComplete) => {
+    const temp = {
+      ...loadingStates,
+      [categrory]: { isLoading: isLoading, isComplete: isComplete },
+    };
+    console.log(temp);
+    setLoadingStates(temp);
+  };
+
   const handleSearch = async (method) => {
+    updateLoadingState("connect", true, false);
     const fastSearch = settings.searchType === "fast";
-    setInProgress(true);
     setMessage("Searching for album...");
-    const response = await getSearchResult(band, album);
-    setMessage("Album located");
-    let releases;
-    switch (method) {
-      case "band":
-        releases = await bandReleases(response, fastSearch);
-        break;
+    try {
+      const response = await getSearchResult(band, album);
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      setMessage("Album located");
+      let releases;
+      switch (method) {
+        case "band":
+          updateLoadingState("connect", false, true);
+          updateLoadingState("artists", true, false);
+          releases = await bandReleases(response, fastSearch);
+          break;
 
-      case "member":
-        releases = await memberReleases(response, fastSearch);
-        break;
+        case "member":
+          updateLoadingState("connect", false, true);
+          updateLoadingState("artists", true, false);
+          releases = await memberReleases(response, fastSearch);
+          break;
 
-      case "contributor":
-        releases = await contributorReleases(response, fastSearch);
-        break;
+        case "contributor":
+          releases = await contributorReleases(response, fastSearch);
+          break;
 
-      default:
-        releases = [];
-        break;
-    }
-    setData(releases);
-    setInProgress(false);
-    console.log(settings, coolDown);
-    if (settings.searchType === "fast") {
-      setCooldown(true);
+        default:
+          releases = [];
+          break;
+      }
+      setData(releases);
+      setInProgress(false);
+      console.log(settings, coolDown);
+      if (settings.searchType === "fast") {
+        setCooldown(true);
+      }
+    } catch (error) {
+      updateLoadingState("connect", false, false);
+      console.log(error);
     }
   };
 
@@ -270,11 +296,31 @@ function App() {
           }}
         >
           <StyledLoadingBarWrapper className="progress-block">
-            <LoadingBar isLoading={false} isComplete={false} text="CONNECT" />
-            <LoadingBar isLoading={false} isComplete={false} text="ARTISTS" />
-            <LoadingBar isLoading={false} isComplete={false} text="MEMBERS" />
-            <LoadingBar isLoading={false} isComplete={true} text="CREDITS" />
-            <LoadingBar isLoading={true} isComplete={false} text="RECORDS" />
+            <LoadingBar
+              isLoading={loadingStates.connect.isLoading}
+              isComplete={loadingStates.connect.isComplete}
+              text="CONNECT"
+            />
+            <LoadingBar
+              isLoading={loadingStates.artists.isLoading}
+              isComplete={loadingStates.artists.isComplete}
+              text="ARTISTS"
+            />
+            <LoadingBar
+              isLoading={loadingStates.members.isLoading}
+              isComplete={loadingStates.members.isComplete}
+              text="MEMBERS"
+            />
+            <LoadingBar
+              isLoading={loadingStates.credits.isLoading}
+              isComplete={loadingStates.credits.isComplete}
+              text="CREDITS"
+            />
+            <LoadingBar
+              isLoading={loadingStates.records.isLoading}
+              isComplete={loadingStates.records.isComplete}
+              text="RECORDS"
+            />
           </StyledLoadingBarWrapper>
           <div
             className="input-block"
