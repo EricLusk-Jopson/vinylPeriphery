@@ -1,5 +1,21 @@
-disable all search buttons on in-progress
-animate progress bar animation for in-progress search that was clicked
+replace loading bars but have them the text be coloured red as it loads
+loaded bars go green
 
-disable all search buttons on cooldown
-animate a cooldown animation for the button that was clicked
+animate loading bar descent on individual calls
+transition colour loading bar text red if they are relevant to the search
+add cursed test to section behind loading bars
+
+style scrollbar better
+
+add red glowing hightlight around active search card
+
+dim other search cards when one is in use
+
+add cooldown bar above the results navigation container
+
+loading state variables
+on each search function, set loading state variables accordingly
+
+add backend
+
+look into AWS for backend hosting
