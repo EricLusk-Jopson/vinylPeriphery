@@ -1,13 +1,13 @@
 import { useState, useEffect, React } from "react";
 import {
   getSearchResult,
-  getArtists,
+  createArtistRecord,
   getMembers,
   getContributors,
   loadMore,
 } from "./helpers/asyncCalls";
 import { ResultCard } from "./components/ResultCard";
-import { quickDelay, longDelay } from "./helpers/magicNumbers";
+import { callLimit, quickDelay, longDelay } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
 
@@ -62,6 +62,77 @@ function App() {
     else return false;
   };
 
+  const getArtists = async (release, fastSearch, callCount) => {
+    const delay = fastSearch ? quickDelay : longDelay;
+    let currentCount = callCount;
+
+    const output = [];
+    let temp = {
+      ...loadingStates,
+      records: { isLoading: true, isComplete: false },
+    };
+    setLoadingStates(temp);
+
+    // for every artist recorded in the response
+    for (const artist of release.artists) {
+      if (fastSearch && currentCount >= callLimit - 2) break;
+      console.log(`searching for artist ${artist.name}...`);
+
+      try {
+        // fetch their information
+        const artistResponse = await fetch(artist.resource_url).then((res) =>
+          res.json()
+        );
+        currentCount++;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        // fetch their releases
+        const releasesResponse = await fetch(
+          `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
+        ).then((res) => res.json());
+        currentCount++;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        if (
+          releasesResponse &&
+          releasesResponse.releases &&
+          releasesResponse.pagination
+        ) {
+          const newArtist = createArtistRecord(
+            artist.name,
+            artist.id,
+            {
+              prev: releasesResponse.pagination.urls?.prev,
+              next: releasesResponse.pagination.urls?.next,
+              last: releasesResponse.pagination.urls?.last,
+            },
+            releasesResponse.releases,
+            artist.roles ?? [""]
+          );
+          output.push(newArtist);
+        }
+        temp = {
+          ...temp,
+          artists: { isLoading: false, isComplete: true },
+          records: { isLoading: false, isComplete: true },
+        };
+        console.log(temp);
+        setLoadingStates(temp);
+        console.log(output);
+      } catch (error) {
+        console.error(`Error: ${error}`);
+        temp = {
+          ...temp,
+          artists: { isLoading: false, isComplete: false },
+          records: { isLoading: false, isComplete: false },
+        };
+        console.log(temp);
+        setLoadingStates(temp);
+      }
+    }
+    return output;
+  };
+
   const bandReleases = async (response, fast) => {
     setMessage("Retrieving album info...");
     const delay = fast ? quickDelay : longDelay;
@@ -69,6 +140,12 @@ function App() {
       res.json()
     );
     await new Promise((resolve) => setTimeout(resolve, delay));
+    let temp = {
+      ...loadingStates,
+      connect: { isLoading: false, isComplete: true },
+      artists: { isLoading: true, isComplete: false },
+    };
+    setLoadingStates(temp);
     let callCount = 2;
     setMessage(
       `Checking releases associated with ${
@@ -139,17 +216,15 @@ function App() {
     return contributors;
   };
 
-  const updateLoadingState = (categrory, isLoading, isComplete) => {
-    const temp = {
-      ...loadingStates,
-      [categrory]: { isLoading: isLoading, isComplete: isComplete },
-    };
-    console.log(temp);
-    setLoadingStates(temp);
-  };
-
   const handleSearch = async (method) => {
-    updateLoadingState("connect", true, false);
+    let temp = {
+      connect: { isLoading: true, isComplete: false },
+      artists: { isLoading: false, isComplete: false },
+      members: { isLoading: false, isComplete: false },
+      credits: { isLoading: false, isComplete: false },
+      records: { isLoading: false, isComplete: false },
+    };
+    setLoadingStates(temp);
     const fastSearch = settings.searchType === "fast";
     setMessage("Searching for album...");
     try {
@@ -161,14 +236,16 @@ function App() {
       let releases;
       switch (method) {
         case "band":
-          updateLoadingState("connect", false, true);
-          updateLoadingState("artists", true, false);
           releases = await bandReleases(response, fastSearch);
           break;
 
         case "member":
-          updateLoadingState("connect", false, true);
-          updateLoadingState("artists", true, false);
+          temp = {
+            ...temp,
+            connect: { isLoading: false, isComplete: true },
+            artists: { isLoading: true, isComplete: false },
+          };
+          setLoadingStates(temp);
           releases = await memberReleases(response, fastSearch);
           break;
 
@@ -187,7 +264,11 @@ function App() {
         setCooldown(true);
       }
     } catch (error) {
-      updateLoadingState("connect", false, false);
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
       console.log(error);
     }
   };

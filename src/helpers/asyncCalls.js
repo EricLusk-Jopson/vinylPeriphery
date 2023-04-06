@@ -16,59 +16,6 @@ export const getSearchResult = async (band, album) => {
   ).then((res) => res.json());
 };
 
-export const getArtists = async (release, fastSearch, callCount) => {
-  const delay = fastSearch ? quickDelay : longDelay;
-  let currentCount = callCount;
-
-  const output = [];
-
-  // for every artist recorded in the response
-  for (const artist of release.artists) {
-    if (fastSearch && currentCount >= callLimit - 2) break;
-    console.log(`searching for artist ${artist.name}...`);
-
-    try {
-      // fetch their information
-      const artistResponse = await fetch(artist.resource_url).then((res) =>
-        res.json()
-      );
-      currentCount++;
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      // fetch their releases
-      const releasesResponse = await fetch(
-        `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-      ).then((res) => res.json());
-      currentCount++;
-      await new Promise((resolve) => setTimeout(resolve, delay));
-
-      if (
-        releasesResponse &&
-        releasesResponse.releases &&
-        releasesResponse.pagination
-      ) {
-        const newArtist = createArtistRecord(
-          artist.name,
-          artist.id,
-          {
-            prev: releasesResponse.pagination.urls?.prev,
-            next: releasesResponse.pagination.urls?.next,
-            last: releasesResponse.pagination.urls?.last,
-          },
-          releasesResponse.releases,
-          artist.roles ?? [""]
-        );
-        output.push(newArtist);
-      }
-
-      console.log(output);
-    } catch (error) {
-      console.error(`Error: ${error}`);
-    }
-  }
-  return output;
-};
-
 export const getMembers = async (release, fastSearch, callCount) => {
   const delay = fastSearch ? quickDelay : longDelay;
   let currentCount = callCount;
