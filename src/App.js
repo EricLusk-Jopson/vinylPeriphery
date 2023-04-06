@@ -511,70 +511,72 @@ function App() {
     }
   };
 
-  const handleSearch = async (method) => {
+  const loadMore = async (data, relation) => {
     let temp = {
-      connect: { isLoading: true, isComplete: false },
+      connect: { isLoading: false, isComplete: false },
       artists: { isLoading: false, isComplete: false },
       members: { isLoading: false, isComplete: false },
       credits: { isLoading: false, isComplete: false },
-      records: { isLoading: false, isComplete: false },
+      records: { isLoading: true, isComplete: false },
     };
     setLoadingStates(temp);
-    const fastSearch = settings.searchType === "fast";
-    setMessage("Searching for album...");
-    try {
-      const response = await getSearchResult(band, album);
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-      );
-      setMessage("Album located");
-      let releases;
-      switch (method) {
-        case "band":
-          releases = await bandReleases(response, fastSearch);
+    let currentCount = 0;
+    const output = [];
+    for (const artist of data) {
+      if (artist.pagination[relation] === undefined) {
+        output.push({
+          ...artist,
+          pagination: {
+            ...artist.pagination,
+            prev: artist.pagination.last,
+            last: artist.pagination.last,
+          },
+          releases: [],
+        });
+      } else {
+        if (settings.searchType === "fast" && currentCount >= callLimit - 1)
           break;
-
-        case "member":
-          temp = {
-            ...temp,
-            connect: { isLoading: false, isComplete: true },
-            artists: { isLoading: true, isComplete: false },
-          };
-          setLoadingStates(temp);
-          releases = await memberReleases(response, fastSearch);
-          break;
-
-        case "contributor":
-          releases = await contributorReleases(response, fastSearch);
-          break;
-
-        default:
-          releases = [];
-          break;
+        const artistReleases = await fetch(artist.pagination[relation])
+          .then((res) => res.json())
+          .catch((err) => console.log(err));
+        await new Promise((resolve) =>
+          setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+        );
+        if (
+          artistReleases &&
+          artistReleases.releases &&
+          artistReleases.pagination
+        ) {
+          const newArtist = createArtistRecord(
+            artist.name,
+            artist.id,
+            {
+              prev: artistReleases.pagination.urls?.prev,
+              next: artistReleases.pagination.urls?.next,
+              last: artist.pagination.last,
+            },
+            artistReleases.releases,
+            artist.roles ?? [""]
+          );
+          output.push(newArtist);
+        }
       }
-      setData(releases);
-      setInProgress(false);
-      console.log(settings, coolDown);
-      if (settings.searchType === "fast") {
-        setCooldown(true);
-      }
-    } catch (error) {
-      temp = {
-        ...temp,
-        connect: { isLoading: false, isComplete: false },
-      };
-      setLoadingStates(temp);
-      console.log(error);
     }
+    temp = {
+      ...temp,
+      records: { isLoading: false, isComplete: true },
+    };
+    setLoadingStates(temp);
+    return output;
   };
 
   const loadLast = async () => {
-    const moreReleases = await loadMore(data, "prev", settings.fastSearch);
+    const moreReleases = await loadMore(data, "prev");
     setData(moreReleases);
   };
 
   const loadNext = async () => {
-    const moreReleases = await loadMore(data, "next", settings.fastSearch);
+    const moreReleases = await loadMore(data, "next");
     setData(moreReleases);
   };
 
@@ -887,7 +889,7 @@ function App() {
               yields the smallest set of results.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => handleSearch("band")}>Search</button>
+              <button onClick={() => bandReleases}>Search</button>
             </div>
           </div>
           <div style={{ width: "25%" }}>
@@ -900,7 +902,7 @@ function App() {
               groups.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => handleSearch("member")}>Search</button>
+              <button onClick={() => memberReleases}>Search</button>
             </div>
           </div>
           <div style={{ width: "25%" }}>
@@ -913,9 +915,7 @@ function App() {
               minute to perform.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => handleSearch("contributor")}>
-                Search
-              </button>
+              <button onClick={() => contributorReleases}>Search</button>
             </div>
           </div>
         </div>
