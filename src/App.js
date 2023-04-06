@@ -62,102 +62,126 @@ function App() {
     else return false;
   };
 
-  const getArtists = async (release, fastSearch, callCount) => {
-    const delay = fastSearch ? quickDelay : longDelay;
-    let currentCount = callCount;
-
-    const output = [];
+  const bandReleases = async () => {
     let temp = {
-      ...loadingStates,
-      records: { isLoading: true, isComplete: false },
+      connect: { isLoading: true, isComplete: false },
+      artists: { isLoading: false, isComplete: false },
+      members: { isLoading: false, isComplete: false },
+      credits: { isLoading: false, isComplete: false },
+      records: { isLoading: false, isComplete: false },
     };
     setLoadingStates(temp);
+    setMessage("Searching for album...");
+    try {
+      const response = await getSearchResult(band, album);
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      setMessage("Album located");
+      setMessage("Retrieving album info...");
+      const release = await fetch(response.results[0].resource_url).then(
+        (res) => res.json()
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      let temp = {
+        ...loadingStates,
+        connect: { isLoading: false, isComplete: true },
+        artists: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
+      let callCount = 2;
+      setMessage(
+        `Checking releases associated with ${
+          release.artists.length
+        } artist. This will take up to ${
+          (release.artists.length *
+            settings.searchSpeeds[settings.searchType]) /
+            1000 +
+          1
+        } seconds.`
+      );
+      let currentCount = callCount;
 
-    // for every artist recorded in the response
-    for (const artist of release.artists) {
-      if (fastSearch && currentCount >= callLimit - 2) break;
-      console.log(`searching for artist ${artist.name}...`);
+      const output = [];
+      temp = {
+        ...temp,
+        records: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
 
-      try {
-        // fetch their information
-        const artistResponse = await fetch(artist.resource_url).then((res) =>
-          res.json()
-        );
-        currentCount++;
-        await new Promise((resolve) => setTimeout(resolve, delay));
+      // for every artist recorded in the response
+      for (const artist of release.artists) {
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+          break;
+        console.log(`searching for artist ${artist.name}...`);
 
-        // fetch their releases
-        const releasesResponse = await fetch(
-          `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-        ).then((res) => res.json());
-        currentCount++;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-
-        if (
-          releasesResponse &&
-          releasesResponse.releases &&
-          releasesResponse.pagination
-        ) {
-          const newArtist = createArtistRecord(
-            artist.name,
-            artist.id,
-            {
-              prev: releasesResponse.pagination.urls?.prev,
-              next: releasesResponse.pagination.urls?.next,
-              last: releasesResponse.pagination.urls?.last,
-            },
-            releasesResponse.releases,
-            artist.roles ?? [""]
+        try {
+          // fetch their information
+          const artistResponse = await fetch(artist.resource_url).then((res) =>
+            res.json()
           );
-          output.push(newArtist);
-        }
-        temp = {
-          ...temp,
-          artists: { isLoading: false, isComplete: true },
-          records: { isLoading: false, isComplete: true },
-        };
-        console.log(temp);
-        setLoadingStates(temp);
-        console.log(output);
-      } catch (error) {
-        console.error(`Error: ${error}`);
-        temp = {
-          ...temp,
-          artists: { isLoading: false, isComplete: false },
-          records: { isLoading: false, isComplete: false },
-        };
-        console.log(temp);
-        setLoadingStates(temp);
-      }
-    }
-    return output;
-  };
+          currentCount++;
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
 
-  const bandReleases = async (response, fast) => {
-    setMessage("Retrieving album info...");
-    const delay = fast ? quickDelay : longDelay;
-    const release = await fetch(response.results[0].resource_url).then((res) =>
-      res.json()
-    );
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    let temp = {
-      ...loadingStates,
-      connect: { isLoading: false, isComplete: true },
-      artists: { isLoading: true, isComplete: false },
-    };
-    setLoadingStates(temp);
-    let callCount = 2;
-    setMessage(
-      `Checking releases associated with ${
-        release.artists.length
-      } artist. This will take up to ${
-        (release.artists.length * settings.searchSpeeds[settings.searchType]) /
-          1000 +
-        1
-      } seconds.`
-    );
-    const artists = await getArtists(release, fast, callCount);
-    return artists;
+          // fetch their releases
+          const releasesResponse = await fetch(
+            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
+          ).then((res) => res.json());
+          currentCount++;
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
+
+          if (
+            releasesResponse &&
+            releasesResponse.releases &&
+            releasesResponse.pagination
+          ) {
+            const newArtist = createArtistRecord(
+              artist.name,
+              artist.id,
+              {
+                prev: releasesResponse.pagination.urls?.prev,
+                next: releasesResponse.pagination.urls?.next,
+                last: releasesResponse.pagination.urls?.last,
+              },
+              releasesResponse.releases,
+              artist.roles ?? [""]
+            );
+            output.push(newArtist);
+          }
+          temp = {
+            ...temp,
+            artists: { isLoading: false, isComplete: true },
+            records: { isLoading: false, isComplete: true },
+          };
+          console.log(temp);
+          setLoadingStates(temp);
+          console.log(output);
+        } catch (error) {
+          console.error(`Error: ${error}`);
+          temp = {
+            ...temp,
+            artists: { isLoading: false, isComplete: false },
+            records: { isLoading: false, isComplete: false },
+          };
+          console.log(temp);
+          setLoadingStates(temp);
+        }
+      }
+      return output;
+    } catch (error) {
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+      console.log(error);
+    }
   };
 
   const memberReleases = async (response, fast) => {
