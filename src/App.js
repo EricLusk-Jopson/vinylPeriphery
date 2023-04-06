@@ -21,8 +21,8 @@ function App() {
     excludeAlbum: "true",
     excludeVarious: "false",
     searchSpeeds: {
-      fast: 0.1,
-      comprehensive: 3.2,
+      fast: 100,
+      comprehensive: 3200,
     },
     coolDownRate: {
       fast: 55,
