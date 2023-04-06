@@ -2,7 +2,6 @@ import { useState, useEffect, React } from "react";
 import {
   getSearchResult,
   createArtistRecord,
-  getMembers,
   getContributors,
   loadMore,
 } from "./helpers/asyncCalls";
@@ -184,60 +183,332 @@ function App() {
     }
   };
 
-  const memberReleases = async (response, fast) => {
-    const delay = fast ? quickDelay : longDelay;
-    const release = await fetch(response.results[0].resource_url).then((res) =>
-      res.json()
-    );
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    let callCount = 2;
-    setMessage(
-      `Checking releases associated with ${
-        release.artists.length
-      } artist. This may take up to ${
-        (release.artists.length *
-          10 *
-          settings.searchSpeeds[settings.searchType]) /
-          1000 +
-        1
-      } seconds.`
-    );
-    const members = await getMembers(release, fast, callCount);
-    console.log(members);
-    return members;
-  };
-
-  const contributorReleases = async (response, fast) => {
-    const delay = fast ? quickDelay : longDelay;
-    let callCount = 1;
-    let release;
-    for (let i = 0; i < Math.min(5, response.results.length); i++) {
-      const nextRelease = await fetch(response.results[i].resource_url).then(
+  const memberReleases = async () => {
+    let temp = {
+      connect: { isLoading: true, isComplete: false },
+      artists: { isLoading: false, isComplete: false },
+      members: { isLoading: false, isComplete: false },
+      credits: { isLoading: false, isComplete: false },
+      records: { isLoading: false, isComplete: false },
+    };
+    setLoadingStates(temp);
+    setMessage("Searching for album...");
+    try {
+      const response = await getSearchResult(band, album);
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      setMessage("Album located");
+      setMessage("Retrieving album info...");
+      const release = await fetch(response.results[0].resource_url).then(
         (res) => res.json()
       );
-      callCount++;
-      console.log(`Call Count: ${callCount}`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: true },
+        members: { isLoading: true, isComplete: false },
+        records: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
+      let callCount = 2;
+      setMessage(
+        `Checking releases associated with ${
+          release.artists.length
+        } artist. This may take up to ${
+          (release.artists.length *
+            10 *
+            settings.searchSpeeds[settings.searchType]) /
+            1000 +
+          1
+        } seconds.`
+      );
+      let currentCount = callCount;
+      const output = [];
 
-      if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
-        release = nextRelease;
-        break;
+      // for every artist recorded in the response
+      for (const artist of release.artists) {
+        if (settings.searchType === "fast" && currentCount >= callLimit) break;
+        console.log(`searching for artist ${artist.name}...`);
+
+        try {
+          // fetch their information and count++
+          const artistResponse = await fetch(artist.resource_url).then((res) =>
+            res.json()
+          );
+          currentCount++;
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
+
+          // determine if they have members
+          if (artistResponse.hasOwnProperty("members")) {
+            // for each member in the band
+            for (const member of artistResponse.members) {
+              if (
+                settings.searchType === "fast" &&
+                currentCount >= callLimit - 2
+              )
+                break;
+
+              try {
+                // fetch their information and count++
+                const memberResponse = await fetch(member.resource_url).then(
+                  (res) => res.json()
+                );
+                currentCount++;
+                await new Promise((resolve) =>
+                  setTimeout(
+                    resolve,
+                    settings.searchSpeeds[settings.searchType]
+                  )
+                );
+
+                // fetch their releases and count++
+                const memberReleasesResponse = await fetch(
+                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`
+                ).then((res) => res.json());
+                currentCount++;
+                await new Promise((resolve) =>
+                  setTimeout(
+                    resolve,
+                    settings.searchSpeeds[settings.searchType]
+                  )
+                );
+
+                // Check that the member release response is properly formatted
+                if (
+                  memberReleasesResponse &&
+                  memberReleasesResponse.releases &&
+                  memberReleasesResponse.pagination
+                ) {
+                  // Create a new artist with the member information and add it to the output
+                  const newArtist = createArtistRecord(
+                    memberResponse.name,
+                    memberResponse.id,
+                    {
+                      prev: memberReleasesResponse.pagination.urls?.prev,
+                      next: memberReleasesResponse.pagination.urls?.next,
+                      last: memberReleasesResponse.pagination.urls?.last,
+                    },
+                    memberReleasesResponse.releases,
+                    memberResponse.roles ?? [""]
+                  );
+                  output.push(newArtist);
+                }
+              } catch (error) {
+                console.error(
+                  `Error fetching ${member.resource_url}: ${error}`
+                );
+              }
+            }
+          } else {
+            // The artist has no members, so we must add the artist
+            console.log(`${artist.name} has NO members`);
+
+            // fetch their releases and count++
+            const artistReleasesResponse = await fetch(
+              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
+            ).then((res) => res.json());
+            currentCount++;
+            await new Promise((resolve) =>
+              setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+            );
+
+            if (
+              artistReleasesResponse &&
+              artistReleasesResponse.releases &&
+              artistReleasesResponse.pagination
+            ) {
+              const newArtist = createArtistRecord(
+                artist.name,
+                artist.id,
+                {
+                  prev: artistReleasesResponse.pagination.urls?.prev,
+                  next: artistReleasesResponse.pagination.urls?.next,
+                  last: artistReleasesResponse.pagination.urls?.last,
+                },
+                artistReleasesResponse.releases,
+                artist.roles ?? [""]
+              );
+              output.push(newArtist);
+            }
+          }
+        } catch (error) {
+          console.error(`Error: ${error}`);
+        }
       }
-      release = nextRelease;
+      temp = {
+        ...temp,
+        members: { isLoading: false, isComplete: true },
+        records: { isLoading: false, isComplete: true },
+      };
+      setLoadingStates(temp);
+      console.log(output);
+      return output;
+    } catch (error) {
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+      console.log(error);
     }
-    setMessage(
-      `Checking releases associated with ${
-        release.extraartists.length
-      } artist. This may take up to ${
-        (release.extraartists.length *
-          settings.searchSpeeds[settings.searchType]) /
-          1000 +
-        1
-      } seconds.`
-    );
-    const contributors = await getContributors(release, fast, callCount);
-    console.log(contributors);
-    return contributors;
+  };
+
+  const contributorReleases = async () => {
+    let temp = {
+      connect: { isLoading: true, isComplete: false },
+      artists: { isLoading: false, isComplete: false },
+      members: { isLoading: false, isComplete: false },
+      credits: { isLoading: false, isComplete: false },
+      records: { isLoading: false, isComplete: false },
+    };
+    setLoadingStates(temp);
+    setMessage("Searching for album...");
+    let callCount = 1;
+    try {
+      const response = await getSearchResult(band, album);
+      await new Promise((resolve) =>
+        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      );
+      setMessage("Album located");
+      let release;
+      for (let i = 0; i < Math.min(5, response.results.length); i++) {
+        const nextRelease = await fetch(response.results[i].resource_url).then(
+          (res) => res.json()
+        );
+        callCount++;
+        console.log(`Call Count: ${callCount}`);
+        await new Promise((resolve) =>
+          setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+        );
+
+        if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+          release = nextRelease;
+          break;
+        }
+        release = nextRelease;
+      }
+      setMessage(
+        `Checking releases associated with ${
+          release.extraartists.length
+        } artist. This may take up to ${
+          (release.extraartists.length *
+            settings.searchSpeeds[settings.searchType]) /
+            1000 +
+          1
+        } seconds.`
+      );
+      let currentCount = callCount;
+      const output = [];
+
+      console.log(release);
+      console.log(release.extraartists);
+
+      if (!release.extraartists && release.extraartists.length === 0) {
+        alert("couldn't locate a list of credited artists for this album :(");
+        return [];
+      }
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: true },
+        credits: { isLoading: true, isComplete: false },
+        records: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
+      // form a collection of relevant contributors and their roles
+      const contributors = new Map();
+      release.extraartists.forEach((extraArtist) => {
+        if (
+          !extraArtist.role.includes("Management") &&
+          !extraArtist.role.includes("Photo") &&
+          !extraArtist.role.includes("Translated") &&
+          !extraArtist.role.includes("Art") &&
+          !extraArtist.role.includes("Master")
+        ) {
+          const oldRoles = contributors.has(extraArtist.id)
+            ? [...contributors.get(extraArtist.id).roles]
+            : [];
+          const newRoles = extraArtist.role
+            .split(",")
+            .map((element) => element.trim());
+          contributors.set(extraArtist.id, {
+            id: extraArtist.id,
+            name: extraArtist.name,
+            link: extraArtist.resource_url,
+            roles: [...oldRoles, ...newRoles],
+          });
+        }
+      });
+      console.log(contributors);
+
+      // for each contributor
+      for (const contributor of [...contributors.values()]) {
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+          break;
+        try {
+          // fetch their information
+          const contributorResponse = await fetch(contributor.link).then(
+            (res) => res.json()
+          );
+          currentCount++;
+          console.log(`Call Count: ${currentCount}`);
+          console.log(contributorResponse);
+
+          // fetch their releases and count++
+          const contributorReleasesResponse = await fetch(
+            `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
+          ).then((res) => res.json());
+          currentCount++;
+          console.log(`Call Count: ${currentCount}`);
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
+
+          // Check that the contributor release response is properly formatted
+          if (
+            contributorReleasesResponse &&
+            contributorReleasesResponse.releases &&
+            contributorReleasesResponse.pagination
+          ) {
+            // Create a new artist with the contributor information and add it to the output
+            const newArtist = createArtistRecord(
+              contributor.name,
+              contributor.id,
+              {
+                prev: contributorReleasesResponse.pagination.urls?.prev,
+                next: contributorReleasesResponse.pagination.urls?.next,
+                last: contributorReleasesResponse.pagination.urls?.last,
+              },
+              contributorReleasesResponse.releases,
+              contributor.roles ?? [""]
+            );
+            output.push(newArtist);
+          }
+        } catch (error) {
+          console.log(`Error: ${error}`);
+        }
+      }
+      console.log(output);
+      temp = {
+        ...temp,
+        credits: { isLoading: false, isComplete: true },
+        records: { isLoading: false, isComplete: true },
+      };
+      setLoadingStates(temp);
+      return output;
+    } catch (error) {
+      console.log(error);
+      temp = {
+        ...temp,
+        credits: { isLoading: false, isComplete: false },
+        records: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+    }
   };
 
   const handleSearch = async (method) => {
