@@ -9,6 +9,7 @@ import { ResultCard } from "./components/ResultCard";
 import { callLimit, quickDelay, longDelay } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
+import { StyledInput } from "./components/styles/Input";
 
 function App() {
   const [data, setData] = useState([]);
@@ -711,36 +712,18 @@ function App() {
               marginBottom: "60px",
             }}
           >
-            <input
+            <StyledInput
               placeholder="Band"
               onChange={onChange}
               name="band"
               value={band}
-              style={{
-                border: "none",
-                borderBottom: "4px solid black",
-                width: "60%",
-                marginTop: "50px",
-                outline: "none",
-                fontSize: "1.6em",
-                zIndex: 2,
-              }}
-            ></input>
-            <input
+            ></StyledInput>
+            <StyledInput
               placeholder="Album"
               onChange={onChange}
               name="album"
               value={album}
-              style={{
-                border: "none",
-                borderBottom: "4px solid black",
-                width: "60%",
-                marginTop: "50px",
-                outline: "none",
-                fontSize: "1.6em",
-                zIndex: 2,
-              }}
-            ></input>
+            ></StyledInput>
           </div>
           <div
             className="settings"
