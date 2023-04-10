@@ -4,6 +4,7 @@ import {
   createArtistRecord,
   getContributors,
   loadMore,
+  fetchAndWait,
 } from "./helpers/asyncCalls";
 import { ResultCard } from "./components/ResultCard";
 import { callLimit, quickDelay, longDelay } from "./helpers/magicNumbers";
@@ -63,6 +64,7 @@ function App() {
   };
 
   const bandReleases = async () => {
+    // Set temp and message
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -72,25 +74,30 @@ function App() {
     };
     setLoadingStates(temp);
     setMessage("Searching for album...");
+
+    // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
+
       setMessage("Album located");
       setMessage("Retrieving album info...");
-      const release = await fetch(response.results[0].resource_url).then(
-        (res) => res.json()
+
+      const release = await fetchAndWait(
+        response.results[0].resource_url,
+        settings.searchSpeeds[settings.searchType]
       );
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-      );
+      console.log(release);
+
       let temp = {
         ...loadingStates,
         connect: { isLoading: false, isComplete: true },
         artists: { isLoading: true, isComplete: false },
       };
       setLoadingStates(temp);
+
       let callCount = 2;
       setMessage(
         `Checking releases associated with ${
@@ -119,22 +126,18 @@ function App() {
 
         try {
           // fetch their information
-          const artistResponse = await fetch(artist.resource_url).then((res) =>
-            res.json()
+          const artistResponse = await fetchAndWait(
+            artist.resource_url,
+            settings.searchSpeeds[settings.searchType]
           );
           currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
 
           // fetch their releases
-          const releasesResponse = await fetch(
-            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-          ).then((res) => res.json());
-          currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          const releasesResponse = await fetchAndWait(
+            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+            settings.searchSpeeds[settings.searchType]
           );
+          currentCount++;
 
           if (
             releasesResponse &&
@@ -173,7 +176,7 @@ function App() {
           setLoadingStates(temp);
         }
       }
-      return output;
+      setData(output);
     } catch (error) {
       temp = {
         ...temp,
@@ -201,11 +204,9 @@ function App() {
       );
       setMessage("Album located");
       setMessage("Retrieving album info...");
-      const release = await fetch(response.results[0].resource_url).then(
-        (res) => res.json()
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      const release = await fetchAndWait(
+        response.results[0].resource_url,
+        settings.searchSpeeds[settings.searchType]
       );
       temp = {
         ...temp,
@@ -236,13 +237,11 @@ function App() {
 
         try {
           // fetch their information and count++
-          const artistResponse = await fetch(artist.resource_url).then((res) =>
-            res.json()
+          const artistResponse = await fetchAndWait(
+            artist.resource_url,
+            settings.searchSpeeds[settings.searchType]
           );
           currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
 
           // determine if they have members
           if (artistResponse.hasOwnProperty("members")) {
@@ -256,28 +255,18 @@ function App() {
 
               try {
                 // fetch their information and count++
-                const memberResponse = await fetch(member.resource_url).then(
-                  (res) => res.json()
+                const memberResponse = await fetchAndWait(
+                  member.resource_url,
+                  settings.searchSpeeds[settings.searchType]
                 );
                 currentCount++;
-                await new Promise((resolve) =>
-                  setTimeout(
-                    resolve,
-                    settings.searchSpeeds[settings.searchType]
-                  )
-                );
 
                 // fetch their releases and count++
-                const memberReleasesResponse = await fetch(
-                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`
-                ).then((res) => res.json());
-                currentCount++;
-                await new Promise((resolve) =>
-                  setTimeout(
-                    resolve,
-                    settings.searchSpeeds[settings.searchType]
-                  )
+                const memberReleasesResponse = await fetchAndWait(
+                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`,
+                  settings.searchSpeeds[settings.searchType]
                 );
+                currentCount++;
 
                 // Check that the member release response is properly formatted
                 if (
@@ -310,13 +299,11 @@ function App() {
             console.log(`${artist.name} has NO members`);
 
             // fetch their releases and count++
-            const artistReleasesResponse = await fetch(
-              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-            ).then((res) => res.json());
-            currentCount++;
-            await new Promise((resolve) =>
-              setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+            const artistReleasesResponse = await fetchAndWait(
+              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+              settings.searchSpeeds[settings.searchType]
             );
+            currentCount++;
 
             if (
               artistReleasesResponse &&
@@ -348,7 +335,7 @@ function App() {
       };
       setLoadingStates(temp);
       console.log(output);
-      return output;
+      setData(output);
     } catch (error) {
       temp = {
         ...temp,
@@ -500,7 +487,7 @@ function App() {
         records: { isLoading: false, isComplete: true },
       };
       setLoadingStates(temp);
-      return output;
+      setData(output);
     } catch (error) {
       console.log(error);
       temp = {
@@ -635,6 +622,7 @@ function App() {
         .sort((a, b) => b.year - a.year)
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
+    console.log(data, displayResults);
   }, [data, band, album, settings]);
 
   useEffect(() => {
@@ -872,7 +860,7 @@ function App() {
               yields the smallest set of results.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => bandReleases}>Search</button>
+              <button onClick={bandReleases}>Search</button>
             </div>
           </div>
           <div style={{ width: "25%" }}>
@@ -885,7 +873,7 @@ function App() {
               groups.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => memberReleases}>Search</button>
+              <button onClick={memberReleases}>Search</button>
             </div>
           </div>
           <div style={{ width: "25%" }}>
@@ -898,7 +886,7 @@ function App() {
               minute to perform.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => contributorReleases}>Search</button>
+              <button onClick={contributorReleases}>Search</button>
             </div>
           </div>
         </div>
@@ -913,79 +901,74 @@ function App() {
             alignItems: "center",
           }}
         >
-          {displayResults && displayResults.length > 0 && (
+          <div
+            style={{
+              width: "70%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
             <div
               style={{
-                width: "70%",
+                width: "100%",
+                height: "10vh",
+                fontSize: "1em",
                 display: "flex",
-                flexDirection: "column",
+                flexDirection: "row",
                 alignItems: "center",
+                justifyContent: "space-between",
               }}
             >
-              <div
+              <button
+                disabled={data.every(
+                  (artist) => artist.pagination.prev === undefined
+                )}
+                onClick={loadLast}
                 style={{
-                  width: "100%",
-                  height: "10vh",
+                  border: "none",
+                  backgroundColor: "unset",
+                  color: "white",
                   fontSize: "1em",
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  padding: 0,
+                  margin: "0px 20px",
                 }}
               >
-                <button
-                  disabled={data.every(
-                    (artist) => artist.pagination.prev === undefined
-                  )}
-                  onClick={loadLast}
-                  style={{
-                    border: "none",
-                    backgroundColor: "unset",
-                    color: "white",
-                    fontSize: "1em",
-                    padding: 0,
-                    margin: "0px 20px",
-                  }}
-                >
-                  Last
-                </button>
-                <div
-                  style={{ color: "#fff" }}
-                >{`Search returned ${displayResults.length} records`}</div>
-                <button
-                  disabled={data.every(
-                    (artist) => artist.pagination.next === undefined
-                  )}
-                  onClick={loadNext}
-                  style={{
-                    border: "none",
-                    backgroundColor: "unset",
-                    color: "white",
-                    fontSize: "1em",
-                    padding: 0,
-                    margin: "0px 20px",
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-              {displayResults.map((release, i) => (
-                <ResultCard
-                  key={`resultCard-${i}`}
-                  title={release.title}
-                  artist={release.artist}
-                  body={release.contributors.map(
-                    (contributor) =>
-                      contributor.name +
-                      (contributor.roles.length > 0 &&
-                      contributor.roles[0] !== ""
-                        ? ` (${contributor.roles.join(", ")})`
-                        : "")
-                  )}
-                ></ResultCard>
-              ))}
+                Last
+              </button>
+              <div style={{ color: "#fff" }}>{message}</div>
+              <button
+                disabled={data.every(
+                  (artist) => artist.pagination.next === undefined
+                )}
+                onClick={loadNext}
+                style={{
+                  border: "none",
+                  backgroundColor: "unset",
+                  color: "white",
+                  fontSize: "1em",
+                  padding: 0,
+                  margin: "0px 20px",
+                }}
+              >
+                Next
+              </button>
             </div>
-          )}
+            {displayResults.map((release, i) => (
+              <ResultCard
+                key={`resultCard-${i}`}
+                title={release.title}
+                artist={release.artist}
+                body={release.contributors.map(
+                  (contributor) =>
+                    contributor.name +
+                    (contributor.roles.length > 0 && contributor.roles[0] !== ""
+                      ? ` (${contributor.roles.join(", ")})`
+                      : "")
+                )}
+              ></ResultCard>
+            ))}
+          </div>
         </div>
       </div>
     </>
