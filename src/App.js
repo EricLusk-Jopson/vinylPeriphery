@@ -860,7 +860,9 @@ function App() {
               yields the smallest set of results.
             </div>
             <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={bandReleases}>Search</button>
+              <button className="searchbtn" onClick={bandReleases}>
+                Search
+              </button>
             </div>
           </div>
           <div style={{ width: "25%" }}>
