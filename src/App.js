@@ -7,10 +7,11 @@ import {
   fetchAndWait,
 } from "./helpers/asyncCalls";
 import { ResultCard } from "./components/ResultCard";
-import { callLimit, quickDelay, longDelay } from "./helpers/magicNumbers";
+import { callLimit } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
 import { StyledInput } from "./components/styles/Input";
+import SearchCard from "./components/SearchCard";
 
 function App() {
   const [data, setData] = useState([]);
@@ -38,14 +39,13 @@ function App() {
     records: { isLoading: false, isComplete: false },
   });
   const [message, setMessage] = useState("");
-  const [inProgress, setInProgress] = useState(false);
+  const [activeSearch, setActiveSearch] = useState("");
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
     band: "",
     album: "",
   });
   const { band, album } = formData;
-  const [progress, setProgress] = useState(0);
 
   const consumer_key = "owJjvljKmrcdSbXFVPTu";
   const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
@@ -64,6 +64,7 @@ function App() {
   };
 
   const bandReleases = async () => {
+    setActiveSearch("band");
     // Set temp and message
     let temp = {
       connect: { isLoading: true, isComplete: false },
@@ -188,6 +189,7 @@ function App() {
   };
 
   const memberReleases = async () => {
+    setActiveSearch("member");
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -347,6 +349,7 @@ function App() {
   };
 
   const contributorReleases = async () => {
+    setActiveSearch("contributor");
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -701,13 +704,15 @@ function App() {
             }}
           >
             <StyledInput
-              placeholder="Band"
+              text="Artist"
+              placeholder="Viagra Boys"
               onChange={onChange}
               name="band"
               value={band}
             ></StyledInput>
             <StyledInput
-              placeholder="Album"
+              text="Album"
+              placeholder="Cave World"
               onChange={onChange}
               name="album"
               value={album}
@@ -850,47 +855,30 @@ function App() {
             boxSizing: "border-box",
           }}
         >
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Artist</h1>
-            </div>
-            <div className="body">
-              Returns a collection of all releases associated with the
-              band/artist. This is the fastest available search and typically
-              yields the smallest set of results.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button className="searchbtn" onClick={bandReleases}>
-                Search
-              </button>
-            </div>
-          </div>
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Members</h1>
-            </div>
-            <div className="body">
-              Returns a collection of all releases from each of the band's
-              members. This search may take longer for large and/or long-running
-              groups.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={memberReleases}>Search</button>
-            </div>
-          </div>
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Contributors</h1>
-            </div>
-            <div className="body">
-              Returns all releases associated with the record's credited
-              artists, including session musicians. This search may take over a
-              minute to perform.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={contributorReleases}>Search</button>
-            </div>
-          </div>
+          <SearchCard
+            title="Artist"
+            body="Returns a collection of all releases associated with the
+                band/artist. This is the fastest available search and typically
+                yields the smallest set of results."
+            btnFnc={bandReleases}
+            active={activeSearch === "band"}
+          />
+          <SearchCard
+            title="Members"
+            body="Returns a collection of all releases from each of the band's
+            members. This search may take longer for large and/or long-running
+            groups."
+            btnFnc={memberReleases}
+            active={activeSearch === "member"}
+          />
+          <SearchCard
+            title="Credits"
+            body="Returns all releases associated with the record's credited
+            artists, including session musicians. This search may take over a
+            minute to perform."
+            btnFnc={contributorReleases}
+            active={activeSearch === "contributor"}
+          />
         </div>
         <div
           className="results"
