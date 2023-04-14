@@ -93,8 +93,8 @@ function App() {
       );
       console.log(release);
 
-      let temp = {
-        ...loadingStates,
+      temp = {
+        ...temp,
         connect: { isLoading: false, isComplete: true },
         artists: { isLoading: true, isComplete: false },
       };
@@ -518,6 +518,7 @@ function App() {
   };
 
   const loadMore = async (data, relation) => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
     let temp = {
       connect: { isLoading: false, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -573,7 +574,9 @@ function App() {
       records: { isLoading: false, isComplete: true },
     };
     setLoadingStates(temp);
-    setCooldown(true);
+    if (searchFlag) {
+      setCooldown(true);
+    }
     setActiveSearch("");
     return output;
   };
