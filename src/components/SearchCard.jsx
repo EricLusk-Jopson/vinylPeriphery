@@ -11,12 +11,16 @@ const SearchCard = ({
 }) => {
   return (
     <div className="card" style={{ width: "25%" }}>
-      <StyledContent active={active}>
+      <StyledContent active={active} disabled={disabled}>
         <h1>{title}</h1>
         <p>{body}</p>
       </StyledContent>
       <div className="progress">
-        <StlyedSearchButton active={active} onClick={btnFnc}>
+        <StlyedSearchButton
+          active={active}
+          onClick={btnFnc}
+          disabled={disabled}
+        >
           {btnText}
         </StlyedSearchButton>
       </div>

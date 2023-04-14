@@ -1,7 +1,14 @@
 import React from "react";
 import { ResultCard } from "./ResultCard";
 
-const Results = ({ data, displayResults, message, loadLast, loadNext }) => {
+const Results = ({
+  data,
+  displayResults,
+  message,
+  loadLast,
+  loadNext,
+  coolDown,
+}) => {
   return (
     <div
       className="results"

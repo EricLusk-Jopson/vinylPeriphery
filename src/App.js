@@ -2,11 +2,8 @@ import { useState, useEffect, React } from "react";
 import {
   getSearchResult,
   createArtistRecord,
-  getContributors,
-  loadMore,
   fetchAndWait,
 } from "./helpers/asyncCalls";
-import { ResultCard } from "./components/ResultCard";
 import { callLimit } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
@@ -14,6 +11,7 @@ import { StyledInput } from "./components/styles/Input";
 import SearchCard from "./components/SearchCard";
 import Settings from "./components/Settings";
 import Results from "./components/Results";
+import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -66,6 +64,7 @@ function App() {
   };
 
   const bandReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("band");
     // Set temp and message
     let temp = {
@@ -180,6 +179,10 @@ function App() {
         }
       }
       setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       temp = {
         ...temp,
@@ -191,6 +194,7 @@ function App() {
   };
 
   const memberReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("member");
     let temp = {
       connect: { isLoading: true, isComplete: false },
@@ -340,6 +344,10 @@ function App() {
       setLoadingStates(temp);
       console.log(output);
       setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       temp = {
         ...temp,
@@ -351,6 +359,7 @@ function App() {
   };
 
   const contributorReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("contributor");
     let temp = {
       connect: { isLoading: true, isComplete: false },
@@ -493,6 +502,10 @@ function App() {
       };
       setLoadingStates(temp);
       setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       console.log(error);
       temp = {
@@ -560,6 +573,8 @@ function App() {
       records: { isLoading: false, isComplete: true },
     };
     setLoadingStates(temp);
+    setCooldown(true);
+    setActiveSearch("");
     return output;
   };
 
@@ -661,6 +676,7 @@ function App() {
         <div
           className="upper-search"
           style={{
+            backgroundColor: "white",
             position: "relative",
             height: "50vh",
             display: "flex",
@@ -747,6 +763,9 @@ function App() {
                 yields the smallest set of results."
             btnFnc={bandReleases}
             active={activeSearch === "band"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "band") || coolDown
+            }
           />
           <SearchCard
             title="Members"
@@ -755,6 +774,9 @@ function App() {
             groups."
             btnFnc={memberReleases}
             active={activeSearch === "member"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "member") || coolDown
+            }
           />
           <SearchCard
             title="Credits"
@@ -763,8 +785,13 @@ function App() {
             minute to perform."
             btnFnc={contributorReleases}
             active={activeSearch === "contributor"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "contributor") ||
+              coolDown
+            }
           />
         </div>
+        <CoolDownTimer coolDown={coolDown} />
         <Results
           data={data}
           displayResults={displayResults}
