@@ -12,6 +12,7 @@ import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
 import { StyledInput } from "./components/styles/Input";
 import SearchCard from "./components/SearchCard";
+import Settings from "./components/Settings";
 
 function App() {
   const [data, setData] = useState([]);
@@ -718,129 +719,12 @@ function App() {
               value={album}
             ></StyledInput>
           </div>
-          <div
-            className="settings"
-            style={{
-              position: "fixed",
-              width: "20vw",
-              height: "60vw",
-              backgroundColor: "red",
-              top: "-30vw",
-              left: "65%",
-              transformOrigin: "100% 50%",
-              rotate: displaySettings ? "0deg" : "83deg",
-              zIndex: "10",
-              transition: "rotate 0.35s ease",
-            }}
-          >
-            <div
-              className="settings-block"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-evenly",
-                position: "absolute",
-                left: 0,
-                top: "50%",
-                width: "80%",
-                height: "30%",
-              }}
-            >
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Search Type</label>
-                <select
-                  name="searchType"
-                  value={settings.searchType}
-                  onChange={handleSettingsChange}
-                >
-                  <option value="fast">Fast</option>
-                  <option value="comprehensive">Comprehensive</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Searched Artist</label>
-                <select
-                  name="excludeArtist"
-                  value={settings.excludeArtist}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Searched Album</label>
-                <select
-                  name="excludeAlbum"
-                  value={settings.excludeAlbum}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Various</label>
-                <select
-                  name="excludeVarious"
-                  value={settings.excludeVarious}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-            </div>
-            <div
-              className="button-block"
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                padding: 0,
-                zIndex: "11",
-              }}
-            >
-              <button
-                onClick={toggleSettingsModal}
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  padding: 0,
-                  fontSize: "3vw",
-                  background: "none",
-                  border: "none",
-                  color: "white",
-                  margin: 0,
-                  transformOrigin: "0% 100%",
-                  rotate: "-90deg",
-                }}
-              >
-                Settings
-              </button>
-            </div>
-          </div>
+          <Settings
+            settings={settings}
+            handleSettingsChange={handleSettingsChange}
+            toggleSettingsModal={toggleSettingsModal}
+            displaySettings={displaySettings}
+          />
         </div>
         <div
           className="lower-search"
