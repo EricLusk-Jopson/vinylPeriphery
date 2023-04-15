@@ -2,13 +2,16 @@ import { useState, useEffect, React } from "react";
 import {
   getSearchResult,
   createArtistRecord,
-  getContributors,
-  loadMore,
+  fetchAndWait,
 } from "./helpers/asyncCalls";
-import { ResultCard } from "./components/ResultCard";
-import { callLimit, quickDelay, longDelay } from "./helpers/magicNumbers";
+import { callLimit } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
+import { StyledInput } from "./components/styles/Input";
+import SearchCard from "./components/SearchCard";
+import Settings from "./components/Settings";
+import Results from "./components/Results";
+import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
 
 function App() {
   const [data, setData] = useState([]);
@@ -36,14 +39,13 @@ function App() {
     records: { isLoading: false, isComplete: false },
   });
   const [message, setMessage] = useState("");
-  const [inProgress, setInProgress] = useState(false);
+  const [activeSearch, setActiveSearch] = useState("");
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
     band: "",
     album: "",
   });
   const { band, album } = formData;
-  const [progress, setProgress] = useState(0);
 
   const consumer_key = "owJjvljKmrcdSbXFVPTu";
   const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
@@ -62,6 +64,9 @@ function App() {
   };
 
   const bandReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
+    setActiveSearch("band");
+    // Set temp and message
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -71,25 +76,30 @@ function App() {
     };
     setLoadingStates(temp);
     setMessage("Searching for album...");
+
+    // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
+
       setMessage("Album located");
       setMessage("Retrieving album info...");
-      const release = await fetch(response.results[0].resource_url).then(
-        (res) => res.json()
+
+      const release = await fetchAndWait(
+        response.results[0].resource_url,
+        settings.searchSpeeds[settings.searchType]
       );
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-      );
-      let temp = {
-        ...loadingStates,
+      console.log(release);
+
+      temp = {
+        ...temp,
         connect: { isLoading: false, isComplete: true },
         artists: { isLoading: true, isComplete: false },
       };
       setLoadingStates(temp);
+
       let callCount = 2;
       setMessage(
         `Checking releases associated with ${
@@ -118,22 +128,18 @@ function App() {
 
         try {
           // fetch their information
-          const artistResponse = await fetch(artist.resource_url).then((res) =>
-            res.json()
+          const artistResponse = await fetchAndWait(
+            artist.resource_url,
+            settings.searchSpeeds[settings.searchType]
           );
           currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
 
           // fetch their releases
-          const releasesResponse = await fetch(
-            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-          ).then((res) => res.json());
-          currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          const releasesResponse = await fetchAndWait(
+            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+            settings.searchSpeeds[settings.searchType]
           );
+          currentCount++;
 
           if (
             releasesResponse &&
@@ -172,7 +178,11 @@ function App() {
           setLoadingStates(temp);
         }
       }
-      return output;
+      setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       temp = {
         ...temp,
@@ -184,6 +194,8 @@ function App() {
   };
 
   const memberReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
+    setActiveSearch("member");
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -200,11 +212,9 @@ function App() {
       );
       setMessage("Album located");
       setMessage("Retrieving album info...");
-      const release = await fetch(response.results[0].resource_url).then(
-        (res) => res.json()
-      );
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+      const release = await fetchAndWait(
+        response.results[0].resource_url,
+        settings.searchSpeeds[settings.searchType]
       );
       temp = {
         ...temp,
@@ -235,13 +245,11 @@ function App() {
 
         try {
           // fetch their information and count++
-          const artistResponse = await fetch(artist.resource_url).then((res) =>
-            res.json()
+          const artistResponse = await fetchAndWait(
+            artist.resource_url,
+            settings.searchSpeeds[settings.searchType]
           );
           currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
 
           // determine if they have members
           if (artistResponse.hasOwnProperty("members")) {
@@ -255,28 +263,18 @@ function App() {
 
               try {
                 // fetch their information and count++
-                const memberResponse = await fetch(member.resource_url).then(
-                  (res) => res.json()
+                const memberResponse = await fetchAndWait(
+                  member.resource_url,
+                  settings.searchSpeeds[settings.searchType]
                 );
                 currentCount++;
-                await new Promise((resolve) =>
-                  setTimeout(
-                    resolve,
-                    settings.searchSpeeds[settings.searchType]
-                  )
-                );
 
                 // fetch their releases and count++
-                const memberReleasesResponse = await fetch(
-                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`
-                ).then((res) => res.json());
-                currentCount++;
-                await new Promise((resolve) =>
-                  setTimeout(
-                    resolve,
-                    settings.searchSpeeds[settings.searchType]
-                  )
+                const memberReleasesResponse = await fetchAndWait(
+                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`,
+                  settings.searchSpeeds[settings.searchType]
                 );
+                currentCount++;
 
                 // Check that the member release response is properly formatted
                 if (
@@ -309,13 +307,11 @@ function App() {
             console.log(`${artist.name} has NO members`);
 
             // fetch their releases and count++
-            const artistReleasesResponse = await fetch(
-              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`
-            ).then((res) => res.json());
-            currentCount++;
-            await new Promise((resolve) =>
-              setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+            const artistReleasesResponse = await fetchAndWait(
+              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+              settings.searchSpeeds[settings.searchType]
             );
+            currentCount++;
 
             if (
               artistReleasesResponse &&
@@ -347,7 +343,11 @@ function App() {
       };
       setLoadingStates(temp);
       console.log(output);
-      return output;
+      setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       temp = {
         ...temp,
@@ -359,6 +359,8 @@ function App() {
   };
 
   const contributorReleases = async () => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
+    setActiveSearch("contributor");
     let temp = {
       connect: { isLoading: true, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -499,7 +501,11 @@ function App() {
         records: { isLoading: false, isComplete: true },
       };
       setLoadingStates(temp);
-      return output;
+      setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setActiveSearch("");
     } catch (error) {
       console.log(error);
       temp = {
@@ -512,6 +518,7 @@ function App() {
   };
 
   const loadMore = async (data, relation) => {
+    const searchFlag = settings.searchType === "fast" ? true : false;
     let temp = {
       connect: { isLoading: false, isComplete: false },
       artists: { isLoading: false, isComplete: false },
@@ -567,6 +574,10 @@ function App() {
       records: { isLoading: false, isComplete: true },
     };
     setLoadingStates(temp);
+    if (searchFlag) {
+      setCooldown(true);
+    }
+    setActiveSearch("");
     return output;
   };
 
@@ -634,6 +645,7 @@ function App() {
         .sort((a, b) => b.year - a.year)
         .sort((a, b) => b.contributors.length - a.contributors.length)
     );
+    console.log(data, displayResults);
   }, [data, band, album, settings]);
 
   useEffect(() => {
@@ -667,6 +679,7 @@ function App() {
         <div
           className="upper-search"
           style={{
+            backgroundColor: "white",
             position: "relative",
             height: "50vh",
             display: "flex",
@@ -711,160 +724,27 @@ function App() {
               marginBottom: "60px",
             }}
           >
-            <input
-              placeholder="Band"
+            <StyledInput
+              text="Artist"
+              placeholder="Viagra Boys"
               onChange={onChange}
               name="band"
               value={band}
-              style={{
-                border: "none",
-                borderBottom: "4px solid black",
-                width: "60%",
-                marginTop: "50px",
-                outline: "none",
-                fontSize: "1.6em",
-                zIndex: 2,
-              }}
-            ></input>
-            <input
-              placeholder="Album"
+            ></StyledInput>
+            <StyledInput
+              text="Album"
+              placeholder="Cave World"
               onChange={onChange}
               name="album"
               value={album}
-              style={{
-                border: "none",
-                borderBottom: "4px solid black",
-                width: "60%",
-                marginTop: "50px",
-                outline: "none",
-                fontSize: "1.6em",
-                zIndex: 2,
-              }}
-            ></input>
+            ></StyledInput>
           </div>
-          <div
-            className="settings"
-            style={{
-              position: "fixed",
-              width: "20vw",
-              height: "60vw",
-              backgroundColor: "red",
-              top: "-30vw",
-              left: "65%",
-              transformOrigin: "100% 50%",
-              rotate: displaySettings ? "0deg" : "83deg",
-              zIndex: "10",
-              transition: "rotate 0.35s ease",
-            }}
-          >
-            <div
-              className="settings-block"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-evenly",
-                position: "absolute",
-                left: 0,
-                top: "50%",
-                width: "80%",
-                height: "30%",
-              }}
-            >
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Search Type</label>
-                <select
-                  name="searchType"
-                  value={settings.searchType}
-                  onChange={handleSettingsChange}
-                >
-                  <option value="fast">Fast</option>
-                  <option value="comprehensive">Comprehensive</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Searched Artist</label>
-                <select
-                  name="excludeArtist"
-                  value={settings.excludeArtist}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Searched Album</label>
-                <select
-                  name="excludeAlbum"
-                  value={settings.excludeAlbum}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <label>Exclude Various</label>
-                <select
-                  name="excludeVarious"
-                  value={settings.excludeVarious}
-                  onChange={handleSettingsChange}
-                >
-                  <option value={true}>Yes</option>
-                  <option value={false}>No</option>
-                </select>
-              </div>
-            </div>
-            <div
-              className="button-block"
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                padding: 0,
-                zIndex: "11",
-              }}
-            >
-              <button
-                onClick={toggleSettingsModal}
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  padding: 0,
-                  fontSize: "3vw",
-                  background: "none",
-                  border: "none",
-                  color: "white",
-                  margin: 0,
-                  transformOrigin: "0% 100%",
-                  rotate: "-90deg",
-                }}
-              >
-                Settings
-              </button>
-            </div>
-          </div>
+          <Settings
+            settings={settings}
+            handleSettingsChange={handleSettingsChange}
+            toggleSettingsModal={toggleSettingsModal}
+            displaySettings={displaySettings}
+          />
         </div>
         <div
           className="lower-search"
@@ -879,131 +759,49 @@ function App() {
             boxSizing: "border-box",
           }}
         >
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Artist</h1>
-            </div>
-            <div className="body">
-              Returns a collection of all releases associated with the
-              band/artist. This is the fastest available search and typically
-              yields the smallest set of results.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => bandReleases}>Search</button>
-            </div>
-          </div>
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Members</h1>
-            </div>
-            <div className="body">
-              Returns a collection of all releases from each of the band's
-              members. This search may take longer for large and/or long-running
-              groups.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => memberReleases}>Search</button>
-            </div>
-          </div>
-          <div style={{ width: "25%" }}>
-            <div className="title">
-              <h1>Contributors</h1>
-            </div>
-            <div className="body">
-              Returns all releases associated with the record's credited
-              artists, including session musicians. This search may take over a
-              minute to perform.
-            </div>
-            <div className="progress" style={{ margin: "1em 0" }}>
-              <button onClick={() => contributorReleases}>Search</button>
-            </div>
-          </div>
+          <SearchCard
+            title="Artist"
+            body="Returns a collection of all releases associated with the
+                band/artist. This is the fastest available search and typically
+                yields the smallest set of results."
+            btnFnc={bandReleases}
+            active={activeSearch === "band"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "band") || coolDown
+            }
+          />
+          <SearchCard
+            title="Members"
+            body="Returns a collection of all releases from each of the band's
+            members. This search may take longer for large and/or long-running
+            groups."
+            btnFnc={memberReleases}
+            active={activeSearch === "member"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "member") || coolDown
+            }
+          />
+          <SearchCard
+            title="Credits"
+            body="Returns all releases associated with the record's credited
+            artists, including session musicians. This search may take over a
+            minute to perform."
+            btnFnc={contributorReleases}
+            active={activeSearch === "contributor"}
+            disabled={
+              (activeSearch !== "" && activeSearch !== "contributor") ||
+              coolDown
+            }
+          />
         </div>
-        <div
-          className="results"
-          style={{
-            minHeight: "10vh",
-            backgroundColor: "black",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          {displayResults && displayResults.length > 0 && (
-            <div
-              style={{
-                width: "70%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  height: "10vh",
-                  fontSize: "1em",
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <button
-                  disabled={data.every(
-                    (artist) => artist.pagination.prev === undefined
-                  )}
-                  onClick={loadLast}
-                  style={{
-                    border: "none",
-                    backgroundColor: "unset",
-                    color: "white",
-                    fontSize: "1em",
-                    padding: 0,
-                    margin: "0px 20px",
-                  }}
-                >
-                  Last
-                </button>
-                <div
-                  style={{ color: "#fff" }}
-                >{`Search returned ${displayResults.length} records`}</div>
-                <button
-                  disabled={data.every(
-                    (artist) => artist.pagination.next === undefined
-                  )}
-                  onClick={loadNext}
-                  style={{
-                    border: "none",
-                    backgroundColor: "unset",
-                    color: "white",
-                    fontSize: "1em",
-                    padding: 0,
-                    margin: "0px 20px",
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-              {displayResults.map((release, i) => (
-                <ResultCard
-                  key={`resultCard-${i}`}
-                  title={release.title}
-                  artist={release.artist}
-                  body={release.contributors.map(
-                    (contributor) =>
-                      contributor.name +
-                      (contributor.roles.length > 0 &&
-                      contributor.roles[0] !== ""
-                        ? ` (${contributor.roles.join(", ")})`
-                        : "")
-                  )}
-                ></ResultCard>
-              ))}
-            </div>
-          )}
-        </div>
+        <CoolDownTimer coolDown={coolDown} />
+        <Results
+          data={data}
+          displayResults={displayResults}
+          message={message}
+          loadLast={loadLast}
+          loadNext={loadNext}
+        />
       </div>
     </>
   );
