@@ -1,11 +1,6 @@
-add red glowing hightlight around active search card
+add message
 
-dim other search cards when one is in use
-
-add cooldown bar above the results navigation container
-
-loading state variables
-on each search function, set loading state variables accordingly
+look into pulling album art and content links
 
 add backend
 
