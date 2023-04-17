@@ -210,12 +210,14 @@ function App() {
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
+      console.log(response);
       setMessage("Album located");
       setMessage("Retrieving album info...");
       const release = await fetchAndWait(
         response.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
+      console.log(release);
       temp = {
         ...temp,
         connect: { isLoading: false, isComplete: true },
@@ -225,23 +227,19 @@ function App() {
       setLoadingStates(temp);
       let callCount = 2;
       setMessage(
-        `Checking releases associated with ${
-          release.artists.length
-        } artist. This may take up to ${
-          (release.artists.length *
-            10 *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        `Checking releases associated with ${release.artists.length} artist${
+          release.artists.length > 1 && "s"
+        }.`
       );
       let currentCount = callCount;
       const output = [];
-
+      let artistInc = 1;
       // for every artist recorded in the response
       for (const artist of release.artists) {
         if (settings.searchType === "fast" && currentCount >= callLimit) break;
-        console.log(`searching for artist ${artist.name}...`);
+        setMessage(
+          `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+        );
 
         try {
           // fetch their information and count++
@@ -249,27 +247,38 @@ function App() {
             artist.resource_url,
             settings.searchSpeeds[settings.searchType]
           );
+          console.log(artistResponse);
           currentCount++;
 
           // determine if they have members
           if (artistResponse.hasOwnProperty("members")) {
             // for each member in the band
+            let memberInc = 1;
             for (const member of artistResponse.members) {
               if (
                 settings.searchType === "fast" &&
                 currentCount >= callLimit - 2
-              )
+              ) {
+                setMessage("call limit exceeded. Terminating search...");
                 break;
+              }
 
               try {
                 // fetch their information and count++
+                setMessage(
+                  `searching for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
+                );
                 const memberResponse = await fetchAndWait(
                   member.resource_url,
                   settings.searchSpeeds[settings.searchType]
                 );
+                console.log(memberResponse);
                 currentCount++;
 
                 // fetch their releases and count++
+                setMessage(
+                  `fetching releases for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
+                );
                 const memberReleasesResponse = await fetchAndWait(
                   `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`,
                   settings.searchSpeeds[settings.searchType]
@@ -301,12 +310,15 @@ function App() {
                   `Error fetching ${member.resource_url}: ${error}`
                 );
               }
+              memberInc++;
             }
           } else {
             // The artist has no members, so we must add the artist
-            console.log(`${artist.name} has NO members`);
 
             // fetch their releases and count++
+            setMessage(
+              `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+            );
             const artistReleasesResponse = await fetchAndWait(
               `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
               settings.searchSpeeds[settings.searchType]
@@ -335,6 +347,7 @@ function App() {
         } catch (error) {
           console.error(`Error: ${error}`);
         }
+        artistInc++;
       }
       temp = {
         ...temp,
@@ -602,6 +615,10 @@ function App() {
   };
 
   useEffect(() => {
+    setMessage(`displaying ${displayResults.length} records`);
+  }, [displayResults]);
+
+  useEffect(() => {
     const displayReleases = new Map();
     data.forEach((artist) => {
       artist.releases.forEach((release) => {
@@ -657,10 +674,6 @@ function App() {
     }
     coolDownAfterFastSearch();
   }, [coolDown]);
-
-  useEffect(() => {
-    console.log(band, album);
-  }, [band, album]);
 
   return (
     <>
