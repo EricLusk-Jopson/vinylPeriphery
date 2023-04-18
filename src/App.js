@@ -393,33 +393,31 @@ function App() {
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
-      setMessage("Album located");
-      let release;
+      let release = { extraartists: [] };
+
       for (let i = 0; i < Math.min(5, response.results.length); i++) {
+        setMessage(`Checking for credited artists on result ${i + 1}`);
         const nextRelease = await fetch(response.results[i].resource_url).then(
           (res) => res.json()
         );
+        console.log(i, nextRelease);
         callCount++;
-        console.log(`Call Count: ${callCount}`);
+        console.log(callCount);
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
 
-        if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+        if (
+          nextRelease.extraartists &&
+          nextRelease.extraartists.length >= release.extraartists.length
+        ) {
           release = nextRelease;
-          break;
         }
-        release = nextRelease;
       }
       setMessage(
         `Checking releases associated with ${
           release.extraartists.length
-        } artist. This may take up to ${
-          (release.extraartists.length *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        } contributor${release.extraartists.length > 1 && "s"}.`
       );
       let currentCount = callCount;
       const output = [];
@@ -427,8 +425,10 @@ function App() {
       console.log(release);
       console.log(release.extraartists);
 
-      if (!release.extraartists && release.extraartists.length === 0) {
-        alert("couldn't locate a list of credited artists for this album :(");
+      if (!release.extraartists || release.extraartists.length === 0) {
+        setMessage(
+          "Couldn't locate a list of credited artists for this album :("
+        );
         return [];
       }
       temp = {
@@ -441,43 +441,46 @@ function App() {
       // form a collection of relevant contributors and their roles
       const contributors = new Map();
       release.extraartists.forEach((extraArtist) => {
-        if (
-          !extraArtist.role.includes("Management") &&
-          !extraArtist.role.includes("Photo") &&
-          !extraArtist.role.includes("Translated") &&
-          !extraArtist.role.includes("Art") &&
-          !extraArtist.role.includes("Master")
-        ) {
-          const oldRoles = contributors.has(extraArtist.id)
-            ? [...contributors.get(extraArtist.id).roles]
-            : [];
-          const newRoles = extraArtist.role
-            .split(",")
-            .map((element) => element.trim());
-          contributors.set(extraArtist.id, {
-            id: extraArtist.id,
-            name: extraArtist.name,
-            link: extraArtist.resource_url,
-            roles: [...oldRoles, ...newRoles],
-          });
-        }
+        const oldRoles = contributors.has(extraArtist.id)
+          ? [...contributors.get(extraArtist.id).roles]
+          : [];
+        // TODO: for new roles, filter based on settings options.
+        const newRoles = extraArtist.role
+          .split(",")
+          .map((element) => element.trim());
+        contributors.set(extraArtist.id, {
+          id: extraArtist.id,
+          name: extraArtist.name,
+          link: extraArtist.resource_url,
+          roles: [...oldRoles, ...newRoles],
+        });
       });
       console.log(contributors);
 
       // for each contributor
+      let contributorInc = 1;
       for (const contributor of [...contributors.values()]) {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          setMessage("Too many API calls. Aborting...");
           break;
+        }
         try {
           // fetch their information
+          setMessage(
+            `Checking contributor ${contributorInc} of ${contributors.size}.`
+          );
           const contributorResponse = await fetch(contributor.link).then(
             (res) => res.json()
           );
           currentCount++;
-          console.log(`Call Count: ${currentCount}`);
-          console.log(contributorResponse);
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
 
           // fetch their releases and count++
+          setMessage(
+            `fetching releases for contributor ${contributorInc} of ${contributors.size}.`
+          );
           const contributorReleasesResponse = await fetch(
             `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
           ).then((res) => res.json());
@@ -510,6 +513,7 @@ function App() {
         } catch (error) {
           console.log(`Error: ${error}`);
         }
+        contributorInc++;
       }
       console.log(output);
       temp = {
