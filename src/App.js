@@ -102,14 +102,9 @@ function App() {
 
       let callCount = 2;
       setMessage(
-        `Checking releases associated with ${
-          release.artists.length
-        } artist. This will take up to ${
-          (release.artists.length *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        `Checking releases associated with ${release.artists.length} artist${
+          release.artists.length > 1 && "s"
+        }.`
       );
       let currentCount = callCount;
 
@@ -120,14 +115,19 @@ function App() {
       };
       setLoadingStates(temp);
 
+      let artistInc = 1;
       // for every artist recorded in the response
       for (const artist of release.artists) {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          setMessage("call limit exceeded. Terminating search...");
           break;
-        console.log(`searching for artist ${artist.name}...`);
+        }
 
         try {
           // fetch their information
+          setMessage(
+            `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
           const artistResponse = await fetchAndWait(
             artist.resource_url,
             settings.searchSpeeds[settings.searchType]
@@ -135,6 +135,9 @@ function App() {
           currentCount++;
 
           // fetch their releases
+          setMessage(
+            `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
           const releasesResponse = await fetchAndWait(
             `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
             settings.searchSpeeds[settings.searchType]
@@ -177,6 +180,7 @@ function App() {
           console.log(temp);
           setLoadingStates(temp);
         }
+        artistInc++;
       }
       setData(output);
       if (searchFlag) {
