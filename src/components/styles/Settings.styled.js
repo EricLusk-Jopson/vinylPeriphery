@@ -36,7 +36,8 @@ export const StyledSettings = styled.div`
   transform-origin: 100% 50%;
   rotate: ${(props) => (props.displaySettings ? "0deg" : "83deg")};
   z-index: 10;
-  transition: rotate 0.35s ease;
+  box-shadow: ${(props) => (props.displaySettings ? "10px 10px" : "5px 0px")};
+  transition: rotate 0.35s ease, box-shadow 0.35s ease;
 `;
 
 export const StyledOptionsContainer = styled.div`

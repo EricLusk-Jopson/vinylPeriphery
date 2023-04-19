@@ -37,6 +37,22 @@ const Settings = ({
             justifyContent: "space-between",
           }}
         >
+          <label>Exclude Production Staff</label>
+          <select
+            name="excludeProduction"
+            value={settings.excludeProduction}
+            onChange={handleSettingsChange}
+          >
+            <option value={true}>Yes</option>
+            <option value={false}>No</option>
+          </select>
+        </div>
+        <div
+          style={{
+            display: "inline-flex",
+            justifyContent: "space-between",
+          }}
+        >
           <label>Exclude Searched Artist</label>
           <select
             name="excludeArtist"
@@ -73,6 +89,22 @@ const Settings = ({
           <select
             name="excludeVarious"
             value={settings.excludeVarious}
+            onChange={handleSettingsChange}
+          >
+            <option value={true}>Yes</option>
+            <option value={false}>No</option>
+          </select>
+        </div>
+        <div
+          style={{
+            display: "inline-flex",
+            justifyContent: "space-between",
+          }}
+        >
+          <label>Require Two Or More Contributors</label>
+          <select
+            name="excludeSolo"
+            value={settings.excludeSolo}
             onChange={handleSettingsChange}
           >
             <option value={true}>Yes</option>

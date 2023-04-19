@@ -23,6 +23,8 @@ function App() {
     excludeArtist: "true",
     excludeAlbum: "true",
     excludeVarious: "false",
+    excludeSolo: "false",
+    excludeProduction: "false",
     searchSpeeds: {
       fast: 100,
       comprehensive: 3200,
@@ -34,6 +36,19 @@ function App() {
       "translated",
       "assemblage",
       "manager",
+    ],
+    productionRoles: [
+      "a&r",
+      "audio",
+      "record",
+      "mixed",
+      "master",
+      "produced",
+      "production",
+      "assistant",
+      "creative",
+      "director",
+      "lacquer cut",
     ],
   });
   const [loadingStates, setLoadingStates] = useState({
@@ -430,18 +445,20 @@ function App() {
         const oldRoles = contributors.has(extraArtist.id)
           ? [...contributors.get(extraArtist.id).roles]
           : [];
-        // TODO: for new roles, filter based on settings options.
         const newRoles = extraArtist.role
           .split(",")
           .map((element) => element.trim());
+        const exclusions = [...settings.excludedRoles];
+        if (settings.excludeProduction) {
+          exclusions.push(...settings.productionRoles);
+        }
+        console.log(settings, exclusions);
 
         if (newRoles.length > 0) {
           for (let i = 0; i < newRoles.length; i++) {
-            for (let j = 0; j < settings.excludedRoles.length; j++) {
-              console.log(newRoles[i].toLowerCase(), settings.excludedRoles[j]);
-              if (
-                newRoles[i].toLowerCase().includes(settings.excludedRoles[j])
-              ) {
+            for (let j = 0; j < exclusions.length; j++) {
+              console.log(newRoles[i].toLowerCase(), exclusions[j]);
+              if (newRoles[i].toLowerCase().includes(exclusions[j])) {
                 newRoles.splice(i, 1);
                 i--;
                 break;
@@ -644,6 +661,11 @@ function App() {
     if (convertStringToBoolean(settings.excludeVarious)) {
       filteredReleases = filteredReleases.filter(
         (release) => release.artist.toLowerCase() !== "various"
+      );
+    }
+    if (convertStringToBoolean(settings.excludeSolo)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.contributors.length > 1
       );
     }
 
