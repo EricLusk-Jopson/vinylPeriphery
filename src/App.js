@@ -49,6 +49,7 @@ function App() {
       "creative",
       "director",
       "lacquer cut",
+      "engineer",
     ],
   });
   const [loadingStates, setLoadingStates] = useState({
