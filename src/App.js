@@ -23,14 +23,34 @@ function App() {
     excludeArtist: "true",
     excludeAlbum: "true",
     excludeVarious: "false",
+    excludeSolo: "false",
+    excludeProduction: "false",
     searchSpeeds: {
       fast: 100,
       comprehensive: 3200,
     },
-    coolDownRate: {
-      fast: 55,
-      comprehensive: 3.2,
-    },
+    excludedRoles: [
+      "art",
+      "photo",
+      "coordinator",
+      "translated",
+      "assemblage",
+      "manager",
+    ],
+    productionRoles: [
+      "a&r",
+      "audio",
+      "record",
+      "mixed",
+      "master",
+      "produced",
+      "production",
+      "assistant",
+      "creative",
+      "director",
+      "lacquer cut",
+      "engineer",
+    ],
   });
   const [loadingStates, setLoadingStates] = useState({
     connect: { isLoading: false, isComplete: false },
@@ -93,7 +113,6 @@ function App() {
         response.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
-      console.log(release);
 
       temp = {
         ...temp,
@@ -169,9 +188,7 @@ function App() {
             artists: { isLoading: false, isComplete: true },
             records: { isLoading: false, isComplete: true },
           };
-          console.log(temp);
           setLoadingStates(temp);
-          console.log(output);
         } catch (error) {
           console.error(`Error: ${error}`);
           temp = {
@@ -179,7 +196,6 @@ function App() {
             artists: { isLoading: false, isComplete: false },
             records: { isLoading: false, isComplete: false },
           };
-          console.log(temp);
           setLoadingStates(temp);
         }
         artistInc++;
@@ -217,14 +233,12 @@ function App() {
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
-      console.log(response);
       setMessage("Album located");
       setMessage("Retrieving album info...");
       const release = await fetchAndWait(
         response.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
-      console.log(release);
       temp = {
         ...temp,
         connect: { isLoading: false, isComplete: true },
@@ -254,7 +268,6 @@ function App() {
             artist.resource_url,
             settings.searchSpeeds[settings.searchType]
           );
-          console.log(artistResponse);
           currentCount++;
 
           // determine if they have members
@@ -279,7 +292,6 @@ function App() {
                   member.resource_url,
                   settings.searchSpeeds[settings.searchType]
                 );
-                console.log(memberResponse);
                 currentCount++;
 
                 // fetch their releases and count++
@@ -354,7 +366,6 @@ function App() {
         records: { isLoading: false, isComplete: true },
       };
       setLoadingStates(temp);
-      console.log(output);
       setData(output);
       if (searchFlag) {
         setCooldown(true);
@@ -396,9 +407,7 @@ function App() {
         const nextRelease = await fetch(response.results[i].resource_url).then(
           (res) => res.json()
         );
-        console.log(i, nextRelease);
         callCount++;
-        console.log(callCount);
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
@@ -417,9 +426,6 @@ function App() {
       );
       let currentCount = callCount;
       const output = [];
-
-      console.log(release);
-      console.log(release.extraartists);
 
       if (!release.extraartists || release.extraartists.length === 0) {
         setMessage(
@@ -440,18 +446,36 @@ function App() {
         const oldRoles = contributors.has(extraArtist.id)
           ? [...contributors.get(extraArtist.id).roles]
           : [];
-        // TODO: for new roles, filter based on settings options.
         const newRoles = extraArtist.role
           .split(",")
           .map((element) => element.trim());
-        contributors.set(extraArtist.id, {
-          id: extraArtist.id,
-          name: extraArtist.name,
-          link: extraArtist.resource_url,
-          roles: [...oldRoles, ...newRoles],
-        });
+        const exclusions = [...settings.excludedRoles];
+        if (settings.excludeProduction) {
+          exclusions.push(...settings.productionRoles);
+        }
+        console.log(settings, exclusions);
+
+        if (newRoles.length > 0) {
+          for (let i = 0; i < newRoles.length; i++) {
+            for (let j = 0; j < exclusions.length; j++) {
+              console.log(newRoles[i].toLowerCase(), exclusions[j]);
+              if (newRoles[i].toLowerCase().includes(exclusions[j])) {
+                newRoles.splice(i, 1);
+                i--;
+                break;
+              }
+            }
+          }
+          if (newRoles.length > 0) {
+            contributors.set(extraArtist.id, {
+              id: extraArtist.id,
+              name: extraArtist.name,
+              link: extraArtist.resource_url,
+              roles: [...oldRoles, ...newRoles],
+            });
+          }
+        }
       });
-      console.log(contributors);
 
       // for each contributor
       let contributorInc = 1;
@@ -481,7 +505,6 @@ function App() {
             `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
           ).then((res) => res.json());
           currentCount++;
-          console.log(`Call Count: ${currentCount}`);
           await new Promise((resolve) =>
             setTimeout(resolve, settings.searchSpeeds[settings.searchType])
           );
@@ -507,7 +530,6 @@ function App() {
         }
         contributorInc++;
       }
-      console.log(output);
       temp = {
         ...temp,
         credits: { isLoading: false, isComplete: true },
@@ -530,8 +552,6 @@ function App() {
       setLoadingStates(temp);
     }
   };
-
-  console.log(page, data);
 
   const loadMore = async () => {
     const newPage = page + 1;
@@ -644,6 +664,11 @@ function App() {
         (release) => release.artist.toLowerCase() !== "various"
       );
     }
+    if (convertStringToBoolean(settings.excludeSolo)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.contributors.length > 1
+      );
+    }
 
     setDisplayResults(
       filteredReleases.sort(
@@ -654,7 +679,6 @@ function App() {
   }, [data, band, album, settings]);
 
   useEffect(() => {
-    console.log("coolDown effect called. Cooldown is ", coolDown);
     async function coolDownAfterFastSearch() {
       if (coolDown) {
         await new Promise(() => setTimeout(() => setCooldown(false), 60000));
