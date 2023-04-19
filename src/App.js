@@ -531,7 +531,10 @@ function App() {
     }
   };
 
-  const loadMore = async (data, newPage) => {
+  console.log(page, data);
+
+  const loadMore = async () => {
+    const newPage = page + 1;
     const searchFlag = settings.searchType === "fast" ? true : false;
     let temp = {
       connect: { isLoading: false, isComplete: false },
@@ -545,12 +548,7 @@ function App() {
     const output = [];
     let artistInc = 1;
     for (const artist of data) {
-      if (artist.pages < newPage) {
-        output.push({
-          ...artist,
-          releases: [],
-        });
-      } else {
+      if (artist.pages >= newPage) {
         if (settings.searchType === "fast" && currentCount >= callLimit - 1) {
           setMessage("Call limit exceeded. Terminating....");
           break;
@@ -566,20 +564,18 @@ function App() {
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
-        if (
-          artistReleases &&
-          artistReleases.releases &&
-          artistReleases.pagination
-        ) {
+        if (artistReleases && artistReleases.releases) {
           const newArtist = createArtistRecord(
             artist.name,
             artist.id,
             artist.pages,
-            artistReleases.releases,
+            [...artist.releases, ...artistReleases.releases],
             artist.roles ?? [""]
           );
           output.push(newArtist);
         }
+      } else {
+        output.push(artist);
       }
       artistInc++;
     }
@@ -592,22 +588,8 @@ function App() {
       setCooldown(true);
     }
     setActiveSearch("");
-    return output;
-  };
-
-  const loadLast = async () => {
-    const newPage = page - 1;
-    const moreReleases = await loadMore(data, newPage);
-    setData(moreReleases);
+    setData(output);
     setPage(newPage);
-  };
-
-  const loadNext = async () => {
-    const newPage = page + 1;
-    const moreReleases = await loadMore(data, newPage);
-    setData(moreReleases);
-    setPage(newPage);
-    console.log(page);
   };
 
   const toggleSettingsModal = async () => {
@@ -664,9 +646,9 @@ function App() {
     }
 
     setDisplayResults(
-      filteredReleases
-        .sort((a, b) => b.year - a.year)
-        .sort((a, b) => b.contributors.length - a.contributors.length)
+      filteredReleases.sort(
+        (a, b) => b.contributors.length - a.contributors.length
+      )
     );
     console.log(data, displayResults);
   }, [data, band, album, settings]);
@@ -818,10 +800,9 @@ function App() {
           data={data}
           displayResults={displayResults}
           message={message}
-          loadLast={loadLast}
-          loadNext={loadNext}
           currentPage={page}
           coolDown={coolDown}
+          loadMore={loadMore}
         />
       </div>
     </>

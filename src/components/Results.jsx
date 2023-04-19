@@ -1,16 +1,7 @@
 import React from "react";
 import { ResultCard } from "./ResultCard";
-import { StyledLoadButton } from "./styles/ResultCard.styled";
 
-const Results = ({
-  data,
-  displayResults,
-  message,
-  loadLast,
-  loadNext,
-  currentPage,
-  coolDown,
-}) => {
+const Results = ({ data, displayResults, message, loadMore }) => {
   return (
     <div
       className="results"
@@ -39,25 +30,13 @@ const Results = ({
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            color: "white",
           }}
         >
-          <StyledLoadButton
-            disabled={currentPage === 1 || coolDown}
-            onClick={loadLast}
-          >
-            Last
-          </StyledLoadButton>
-          <div style={{ color: "#fff" }}>{message}</div>
-          <StyledLoadButton
-            disabled={
-              data.every((artist) => artist.pages <= currentPage) || coolDown
-            }
-            onClick={loadNext}
-          >
-            Next
-          </StyledLoadButton>
+          {message}
         </div>
+        <button onClick={loadMore}>Load More</button>
         {displayResults.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}
