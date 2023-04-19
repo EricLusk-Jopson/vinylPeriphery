@@ -1,5 +1,6 @@
 import React from "react";
 import { ResultCard } from "./ResultCard";
+import { StyledLoadButton } from "./styles/ResultCard.styled";
 
 const Results = ({
   data,
@@ -7,6 +8,7 @@ const Results = ({
   message,
   loadLast,
   loadNext,
+  currentPage,
   coolDown,
 }) => {
   return (
@@ -40,39 +42,21 @@ const Results = ({
             justifyContent: "space-between",
           }}
         >
-          <button
-            disabled={data.every(
-              (artist) => artist.pagination.prev === undefined
-            )}
+          <StyledLoadButton
+            disabled={currentPage === 1 || coolDown}
             onClick={loadLast}
-            style={{
-              border: "none",
-              backgroundColor: "unset",
-              color: "white",
-              fontSize: "1em",
-              padding: 0,
-              margin: "0px 20px",
-            }}
           >
             Last
-          </button>
+          </StyledLoadButton>
           <div style={{ color: "#fff" }}>{message}</div>
-          <button
-            disabled={data.every(
-              (artist) => artist.pagination.next === undefined
-            )}
+          <StyledLoadButton
+            disabled={
+              data.every((artist) => artist.pages <= currentPage) || coolDown
+            }
             onClick={loadNext}
-            style={{
-              border: "none",
-              backgroundColor: "unset",
-              color: "white",
-              fontSize: "1em",
-              padding: 0,
-              margin: "0px 20px",
-            }}
           >
             Next
-          </button>
+          </StyledLoadButton>
         </div>
         {displayResults.map((release, i) => (
           <ResultCard

@@ -12,6 +12,7 @@ import SearchCard from "./components/SearchCard";
 import Settings from "./components/Settings";
 import Results from "./components/Results";
 import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
+import { getPages } from "./helpers/getPages";
 
 function App() {
   const [data, setData] = useState([]);
@@ -39,6 +40,7 @@ function App() {
     records: { isLoading: false, isComplete: false },
   });
   const [message, setMessage] = useState("");
+  const [page, setPage] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
@@ -149,14 +151,14 @@ function App() {
             releasesResponse.releases &&
             releasesResponse.pagination
           ) {
+            const pages =
+              releasesResponse.pagination.urls?.last !== undefined
+                ? releasesResponse.pagination.urls?.last?.split(/(\=|\&)/)[2]
+                : 1;
             const newArtist = createArtistRecord(
               artist.name,
               artist.id,
-              {
-                prev: releasesResponse.pagination.urls?.prev,
-                next: releasesResponse.pagination.urls?.next,
-                last: releasesResponse.pagination.urls?.last,
-              },
+              getPages(releasesResponse),
               releasesResponse.releases,
               artist.roles ?? [""]
             );
@@ -186,6 +188,7 @@ function App() {
       if (searchFlag) {
         setCooldown(true);
       }
+      setPage(1);
       setActiveSearch("");
     } catch (error) {
       temp = {
@@ -299,11 +302,7 @@ function App() {
                   const newArtist = createArtistRecord(
                     memberResponse.name,
                     memberResponse.id,
-                    {
-                      prev: memberReleasesResponse.pagination.urls?.prev,
-                      next: memberReleasesResponse.pagination.urls?.next,
-                      last: memberReleasesResponse.pagination.urls?.last,
-                    },
+                    getPages(memberReleasesResponse),
                     memberReleasesResponse.releases,
                     memberResponse.roles ?? [""]
                   );
@@ -337,11 +336,7 @@ function App() {
               const newArtist = createArtistRecord(
                 artist.name,
                 artist.id,
-                {
-                  prev: artistReleasesResponse.pagination.urls?.prev,
-                  next: artistReleasesResponse.pagination.urls?.next,
-                  last: artistReleasesResponse.pagination.urls?.last,
-                },
+                getPages(artistReleasesResponse),
                 artistReleasesResponse.releases,
                 artist.roles ?? [""]
               );
@@ -364,6 +359,7 @@ function App() {
       if (searchFlag) {
         setCooldown(true);
       }
+      setPage(1);
       setActiveSearch("");
     } catch (error) {
       temp = {
@@ -500,11 +496,7 @@ function App() {
             const newArtist = createArtistRecord(
               contributor.name,
               contributor.id,
-              {
-                prev: contributorReleasesResponse.pagination.urls?.prev,
-                next: contributorReleasesResponse.pagination.urls?.next,
-                last: contributorReleasesResponse.pagination.urls?.last,
-              },
+              getPages(contributorReleasesResponse),
               contributorReleasesResponse.releases,
               contributor.roles ?? [""]
             );
@@ -527,6 +519,7 @@ function App() {
         setCooldown(true);
       }
       setActiveSearch("");
+      setPage(1);
     } catch (error) {
       console.log(error);
       temp = {
@@ -538,7 +531,7 @@ function App() {
     }
   };
 
-  const loadMore = async (data, relation) => {
+  const loadMore = async (data, newPage) => {
     const searchFlag = settings.searchType === "fast" ? true : false;
     let temp = {
       connect: { isLoading: false, isComplete: false },
@@ -550,21 +543,24 @@ function App() {
     setLoadingStates(temp);
     let currentCount = 0;
     const output = [];
+    let artistInc = 1;
     for (const artist of data) {
-      if (artist.pagination[relation] === undefined) {
+      if (artist.pages < newPage) {
         output.push({
           ...artist,
-          pagination: {
-            ...artist.pagination,
-            prev: artist.pagination.last,
-            last: artist.pagination.last,
-          },
           releases: [],
         });
       } else {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 1)
+        if (settings.searchType === "fast" && currentCount >= callLimit - 1) {
+          setMessage("Call limit exceeded. Terminating....");
           break;
-        const artistReleases = await fetch(artist.pagination[relation])
+        }
+        setMessage(
+          `Retrieving releases for ${artist.name} (${artistInc} / ${data.length})`
+        );
+        const artistReleases = await fetch(
+          `https://api.discogs.com/artists/${artist.id}/releases?page=${newPage}&per_page=100`
+        )
           .then((res) => res.json())
           .catch((err) => console.log(err));
         await new Promise((resolve) =>
@@ -578,17 +574,14 @@ function App() {
           const newArtist = createArtistRecord(
             artist.name,
             artist.id,
-            {
-              prev: artistReleases.pagination.urls?.prev,
-              next: artistReleases.pagination.urls?.next,
-              last: artist.pagination.last,
-            },
+            artist.pages,
             artistReleases.releases,
             artist.roles ?? [""]
           );
           output.push(newArtist);
         }
       }
+      artistInc++;
     }
     temp = {
       ...temp,
@@ -603,13 +596,18 @@ function App() {
   };
 
   const loadLast = async () => {
-    const moreReleases = await loadMore(data, "prev");
+    const newPage = page - 1;
+    const moreReleases = await loadMore(data, newPage);
     setData(moreReleases);
+    setPage(newPage);
   };
 
   const loadNext = async () => {
-    const moreReleases = await loadMore(data, "next");
+    const newPage = page + 1;
+    const moreReleases = await loadMore(data, newPage);
     setData(moreReleases);
+    setPage(newPage);
+    console.log(page);
   };
 
   const toggleSettingsModal = async () => {
@@ -822,6 +820,8 @@ function App() {
           message={message}
           loadLast={loadLast}
           loadNext={loadNext}
+          currentPage={page}
+          coolDown={coolDown}
         />
       </div>
     </>

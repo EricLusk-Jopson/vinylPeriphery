@@ -1,10 +1,8 @@
-import { callLimit, quickDelay, longDelay } from "./magicNumbers";
-
-export const createArtistRecord = (name, id, pagination, releases, roles) => {
+export const createArtistRecord = (name, id, pages, releases, roles) => {
   return {
     name: name,
     id: id,
-    pagination: pagination,
+    pages: pages,
     releases: releases,
     roles: roles,
   };
