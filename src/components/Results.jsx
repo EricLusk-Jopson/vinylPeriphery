@@ -1,14 +1,7 @@
 import React from "react";
 import { ResultCard } from "./ResultCard";
 
-const Results = ({
-  data,
-  displayResults,
-  message,
-  loadLast,
-  loadNext,
-  coolDown,
-}) => {
+const Results = ({ data, displayResults, message, loadMore }) => {
   return (
     <div
       className="results"
@@ -37,43 +30,13 @@ const Results = ({
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            color: "white",
           }}
         >
-          <button
-            disabled={data.every(
-              (artist) => artist.pagination.prev === undefined
-            )}
-            onClick={loadLast}
-            style={{
-              border: "none",
-              backgroundColor: "unset",
-              color: "white",
-              fontSize: "1em",
-              padding: 0,
-              margin: "0px 20px",
-            }}
-          >
-            Last
-          </button>
-          <div style={{ color: "#fff" }}>{message}</div>
-          <button
-            disabled={data.every(
-              (artist) => artist.pagination.next === undefined
-            )}
-            onClick={loadNext}
-            style={{
-              border: "none",
-              backgroundColor: "unset",
-              color: "white",
-              fontSize: "1em",
-              padding: 0,
-              margin: "0px 20px",
-            }}
-          >
-            Next
-          </button>
+          {message}
         </div>
+        <button onClick={loadMore}>Load More</button>
         {displayResults.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}

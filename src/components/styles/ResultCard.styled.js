@@ -8,6 +8,16 @@ export const Results = styled.div`
   width: 70%;
 `;
 
+export const StyledLoadButton = styled.button`
+  border: none;
+  background-color: unset;
+  color: white;
+  fontsize: 1em;
+  padding: 0;
+  margin: 0px 20px;
+  ${(props) => props.disabled && "color: gray;"}
+`;
+
 export const StyledResultCard = styled.div`
   width: 100%;
   margin: 10px 0px;

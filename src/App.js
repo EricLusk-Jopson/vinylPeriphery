@@ -12,6 +12,7 @@ import SearchCard from "./components/SearchCard";
 import Settings from "./components/Settings";
 import Results from "./components/Results";
 import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
+import { getPages } from "./helpers/getPages";
 
 function App() {
   const [data, setData] = useState([]);
@@ -39,6 +40,7 @@ function App() {
     records: { isLoading: false, isComplete: false },
   });
   const [message, setMessage] = useState("");
+  const [page, setPage] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
@@ -102,14 +104,9 @@ function App() {
 
       let callCount = 2;
       setMessage(
-        `Checking releases associated with ${
-          release.artists.length
-        } artist. This will take up to ${
-          (release.artists.length *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        `Checking releases associated with ${release.artists.length} artist${
+          release.artists.length > 1 && "s"
+        }.`
       );
       let currentCount = callCount;
 
@@ -120,14 +117,19 @@ function App() {
       };
       setLoadingStates(temp);
 
+      let artistInc = 1;
       // for every artist recorded in the response
       for (const artist of release.artists) {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          setMessage("call limit exceeded. Terminating search...");
           break;
-        console.log(`searching for artist ${artist.name}...`);
+        }
 
         try {
           // fetch their information
+          setMessage(
+            `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
           const artistResponse = await fetchAndWait(
             artist.resource_url,
             settings.searchSpeeds[settings.searchType]
@@ -135,6 +137,9 @@ function App() {
           currentCount++;
 
           // fetch their releases
+          setMessage(
+            `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
           const releasesResponse = await fetchAndWait(
             `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
             settings.searchSpeeds[settings.searchType]
@@ -146,14 +151,14 @@ function App() {
             releasesResponse.releases &&
             releasesResponse.pagination
           ) {
+            const pages =
+              releasesResponse.pagination.urls?.last !== undefined
+                ? releasesResponse.pagination.urls?.last?.split(/(\=|\&)/)[2]
+                : 1;
             const newArtist = createArtistRecord(
               artist.name,
               artist.id,
-              {
-                prev: releasesResponse.pagination.urls?.prev,
-                next: releasesResponse.pagination.urls?.next,
-                last: releasesResponse.pagination.urls?.last,
-              },
+              getPages(releasesResponse),
               releasesResponse.releases,
               artist.roles ?? [""]
             );
@@ -177,11 +182,13 @@ function App() {
           console.log(temp);
           setLoadingStates(temp);
         }
+        artistInc++;
       }
       setData(output);
       if (searchFlag) {
         setCooldown(true);
       }
+      setPage(1);
       setActiveSearch("");
     } catch (error) {
       temp = {
@@ -210,12 +217,14 @@ function App() {
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
+      console.log(response);
       setMessage("Album located");
       setMessage("Retrieving album info...");
       const release = await fetchAndWait(
         response.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
+      console.log(release);
       temp = {
         ...temp,
         connect: { isLoading: false, isComplete: true },
@@ -225,23 +234,19 @@ function App() {
       setLoadingStates(temp);
       let callCount = 2;
       setMessage(
-        `Checking releases associated with ${
-          release.artists.length
-        } artist. This may take up to ${
-          (release.artists.length *
-            10 *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        `Checking releases associated with ${release.artists.length} artist${
+          release.artists.length > 1 && "s"
+        }.`
       );
       let currentCount = callCount;
       const output = [];
-
+      let artistInc = 1;
       // for every artist recorded in the response
       for (const artist of release.artists) {
         if (settings.searchType === "fast" && currentCount >= callLimit) break;
-        console.log(`searching for artist ${artist.name}...`);
+        setMessage(
+          `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+        );
 
         try {
           // fetch their information and count++
@@ -249,27 +254,38 @@ function App() {
             artist.resource_url,
             settings.searchSpeeds[settings.searchType]
           );
+          console.log(artistResponse);
           currentCount++;
 
           // determine if they have members
           if (artistResponse.hasOwnProperty("members")) {
             // for each member in the band
+            let memberInc = 1;
             for (const member of artistResponse.members) {
               if (
                 settings.searchType === "fast" &&
                 currentCount >= callLimit - 2
-              )
+              ) {
+                setMessage("call limit exceeded. Terminating search...");
                 break;
+              }
 
               try {
                 // fetch their information and count++
+                setMessage(
+                  `searching for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
+                );
                 const memberResponse = await fetchAndWait(
                   member.resource_url,
                   settings.searchSpeeds[settings.searchType]
                 );
+                console.log(memberResponse);
                 currentCount++;
 
                 // fetch their releases and count++
+                setMessage(
+                  `fetching releases for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
+                );
                 const memberReleasesResponse = await fetchAndWait(
                   `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`,
                   settings.searchSpeeds[settings.searchType]
@@ -286,11 +302,7 @@ function App() {
                   const newArtist = createArtistRecord(
                     memberResponse.name,
                     memberResponse.id,
-                    {
-                      prev: memberReleasesResponse.pagination.urls?.prev,
-                      next: memberReleasesResponse.pagination.urls?.next,
-                      last: memberReleasesResponse.pagination.urls?.last,
-                    },
+                    getPages(memberReleasesResponse),
                     memberReleasesResponse.releases,
                     memberResponse.roles ?? [""]
                   );
@@ -301,12 +313,15 @@ function App() {
                   `Error fetching ${member.resource_url}: ${error}`
                 );
               }
+              memberInc++;
             }
           } else {
             // The artist has no members, so we must add the artist
-            console.log(`${artist.name} has NO members`);
 
             // fetch their releases and count++
+            setMessage(
+              `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+            );
             const artistReleasesResponse = await fetchAndWait(
               `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
               settings.searchSpeeds[settings.searchType]
@@ -321,11 +336,7 @@ function App() {
               const newArtist = createArtistRecord(
                 artist.name,
                 artist.id,
-                {
-                  prev: artistReleasesResponse.pagination.urls?.prev,
-                  next: artistReleasesResponse.pagination.urls?.next,
-                  last: artistReleasesResponse.pagination.urls?.last,
-                },
+                getPages(artistReleasesResponse),
                 artistReleasesResponse.releases,
                 artist.roles ?? [""]
               );
@@ -335,6 +346,7 @@ function App() {
         } catch (error) {
           console.error(`Error: ${error}`);
         }
+        artistInc++;
       }
       temp = {
         ...temp,
@@ -347,6 +359,7 @@ function App() {
       if (searchFlag) {
         setCooldown(true);
       }
+      setPage(1);
       setActiveSearch("");
     } catch (error) {
       temp = {
@@ -376,33 +389,31 @@ function App() {
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
-      setMessage("Album located");
-      let release;
+      let release = { extraartists: [] };
+
       for (let i = 0; i < Math.min(5, response.results.length); i++) {
+        setMessage(`Checking for credited artists on result ${i + 1}`);
         const nextRelease = await fetch(response.results[i].resource_url).then(
           (res) => res.json()
         );
+        console.log(i, nextRelease);
         callCount++;
-        console.log(`Call Count: ${callCount}`);
+        console.log(callCount);
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
 
-        if (nextRelease.extraartists && nextRelease.extraartists.length > 0) {
+        if (
+          nextRelease.extraartists &&
+          nextRelease.extraartists.length >= release.extraartists.length
+        ) {
           release = nextRelease;
-          break;
         }
-        release = nextRelease;
       }
       setMessage(
         `Checking releases associated with ${
           release.extraartists.length
-        } artist. This may take up to ${
-          (release.extraartists.length *
-            settings.searchSpeeds[settings.searchType]) /
-            1000 +
-          1
-        } seconds.`
+        } contributor${release.extraartists.length > 1 && "s"}.`
       );
       let currentCount = callCount;
       const output = [];
@@ -410,8 +421,10 @@ function App() {
       console.log(release);
       console.log(release.extraartists);
 
-      if (!release.extraartists && release.extraartists.length === 0) {
-        alert("couldn't locate a list of credited artists for this album :(");
+      if (!release.extraartists || release.extraartists.length === 0) {
+        setMessage(
+          "Couldn't locate a list of credited artists for this album :("
+        );
         return [];
       }
       temp = {
@@ -424,43 +437,46 @@ function App() {
       // form a collection of relevant contributors and their roles
       const contributors = new Map();
       release.extraartists.forEach((extraArtist) => {
-        if (
-          !extraArtist.role.includes("Management") &&
-          !extraArtist.role.includes("Photo") &&
-          !extraArtist.role.includes("Translated") &&
-          !extraArtist.role.includes("Art") &&
-          !extraArtist.role.includes("Master")
-        ) {
-          const oldRoles = contributors.has(extraArtist.id)
-            ? [...contributors.get(extraArtist.id).roles]
-            : [];
-          const newRoles = extraArtist.role
-            .split(",")
-            .map((element) => element.trim());
-          contributors.set(extraArtist.id, {
-            id: extraArtist.id,
-            name: extraArtist.name,
-            link: extraArtist.resource_url,
-            roles: [...oldRoles, ...newRoles],
-          });
-        }
+        const oldRoles = contributors.has(extraArtist.id)
+          ? [...contributors.get(extraArtist.id).roles]
+          : [];
+        // TODO: for new roles, filter based on settings options.
+        const newRoles = extraArtist.role
+          .split(",")
+          .map((element) => element.trim());
+        contributors.set(extraArtist.id, {
+          id: extraArtist.id,
+          name: extraArtist.name,
+          link: extraArtist.resource_url,
+          roles: [...oldRoles, ...newRoles],
+        });
       });
       console.log(contributors);
 
       // for each contributor
+      let contributorInc = 1;
       for (const contributor of [...contributors.values()]) {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 2)
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          setMessage("Too many API calls. Aborting...");
           break;
+        }
         try {
           // fetch their information
+          setMessage(
+            `Checking contributor ${contributorInc} of ${contributors.size}.`
+          );
           const contributorResponse = await fetch(contributor.link).then(
             (res) => res.json()
           );
           currentCount++;
-          console.log(`Call Count: ${currentCount}`);
-          console.log(contributorResponse);
+          await new Promise((resolve) =>
+            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+          );
 
           // fetch their releases and count++
+          setMessage(
+            `fetching releases for contributor ${contributorInc} of ${contributors.size}.`
+          );
           const contributorReleasesResponse = await fetch(
             `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
           ).then((res) => res.json());
@@ -480,11 +496,7 @@ function App() {
             const newArtist = createArtistRecord(
               contributor.name,
               contributor.id,
-              {
-                prev: contributorReleasesResponse.pagination.urls?.prev,
-                next: contributorReleasesResponse.pagination.urls?.next,
-                last: contributorReleasesResponse.pagination.urls?.last,
-              },
+              getPages(contributorReleasesResponse),
               contributorReleasesResponse.releases,
               contributor.roles ?? [""]
             );
@@ -493,6 +505,7 @@ function App() {
         } catch (error) {
           console.log(`Error: ${error}`);
         }
+        contributorInc++;
       }
       console.log(output);
       temp = {
@@ -506,6 +519,7 @@ function App() {
         setCooldown(true);
       }
       setActiveSearch("");
+      setPage(1);
     } catch (error) {
       console.log(error);
       temp = {
@@ -517,7 +531,10 @@ function App() {
     }
   };
 
-  const loadMore = async (data, relation) => {
+  console.log(page, data);
+
+  const loadMore = async () => {
+    const newPage = page + 1;
     const searchFlag = settings.searchType === "fast" ? true : false;
     let temp = {
       connect: { isLoading: false, isComplete: false },
@@ -529,45 +546,38 @@ function App() {
     setLoadingStates(temp);
     let currentCount = 0;
     const output = [];
+    let artistInc = 1;
     for (const artist of data) {
-      if (artist.pagination[relation] === undefined) {
-        output.push({
-          ...artist,
-          pagination: {
-            ...artist.pagination,
-            prev: artist.pagination.last,
-            last: artist.pagination.last,
-          },
-          releases: [],
-        });
-      } else {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 1)
+      if (artist.pages >= newPage) {
+        if (settings.searchType === "fast" && currentCount >= callLimit - 1) {
+          setMessage("Call limit exceeded. Terminating....");
           break;
-        const artistReleases = await fetch(artist.pagination[relation])
+        }
+        setMessage(
+          `Retrieving releases for ${artist.name} (${artistInc} / ${data.length})`
+        );
+        const artistReleases = await fetch(
+          `https://api.discogs.com/artists/${artist.id}/releases?page=${newPage}&per_page=100`
+        )
           .then((res) => res.json())
           .catch((err) => console.log(err));
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
-        if (
-          artistReleases &&
-          artistReleases.releases &&
-          artistReleases.pagination
-        ) {
+        if (artistReleases && artistReleases.releases) {
           const newArtist = createArtistRecord(
             artist.name,
             artist.id,
-            {
-              prev: artistReleases.pagination.urls?.prev,
-              next: artistReleases.pagination.urls?.next,
-              last: artist.pagination.last,
-            },
-            artistReleases.releases,
+            artist.pages,
+            [...artist.releases, ...artistReleases.releases],
             artist.roles ?? [""]
           );
           output.push(newArtist);
         }
+      } else {
+        output.push(artist);
       }
+      artistInc++;
     }
     temp = {
       ...temp,
@@ -578,17 +588,8 @@ function App() {
       setCooldown(true);
     }
     setActiveSearch("");
-    return output;
-  };
-
-  const loadLast = async () => {
-    const moreReleases = await loadMore(data, "prev");
-    setData(moreReleases);
-  };
-
-  const loadNext = async () => {
-    const moreReleases = await loadMore(data, "next");
-    setData(moreReleases);
+    setData(output);
+    setPage(newPage);
   };
 
   const toggleSettingsModal = async () => {
@@ -600,6 +601,10 @@ function App() {
     e.preventDefault();
     setSettings({ ...settings, [e.target.name]: e.target.value });
   };
+
+  useEffect(() => {
+    setMessage(`displaying ${displayResults.length} records`);
+  }, [displayResults]);
 
   useEffect(() => {
     const displayReleases = new Map();
@@ -641,9 +646,9 @@ function App() {
     }
 
     setDisplayResults(
-      filteredReleases
-        .sort((a, b) => b.year - a.year)
-        .sort((a, b) => b.contributors.length - a.contributors.length)
+      filteredReleases.sort(
+        (a, b) => b.contributors.length - a.contributors.length
+      )
     );
     console.log(data, displayResults);
   }, [data, band, album, settings]);
@@ -657,10 +662,6 @@ function App() {
     }
     coolDownAfterFastSearch();
   }, [coolDown]);
-
-  useEffect(() => {
-    console.log(band, album);
-  }, [band, album]);
 
   return (
     <>
@@ -799,8 +800,9 @@ function App() {
           data={data}
           displayResults={displayResults}
           message={message}
-          loadLast={loadLast}
-          loadNext={loadNext}
+          currentPage={page}
+          coolDown={coolDown}
+          loadMore={loadMore}
         />
       </div>
     </>
