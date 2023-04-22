@@ -1,3 +1,5 @@
+import axios from "axios";
+
 export const createArtistRecord = (name, id, pages, releases, roles) => {
   return {
     name: name,
@@ -9,9 +11,11 @@ export const createArtistRecord = (name, id, pages, releases, roles) => {
 };
 
 export const getSearchResult = async (band, album) => {
-  return await fetch(
-    `https://api.discogs.com/database/search?release_title=${album}&artist=${band}&type=release&sort=year&sort_order=asc&key=owJjvljKmrcdSbXFVPTu&secret=wgJurrmQFbROAyrmByuLrZMRMhDznPaK`
-  ).then((res) => res.json());
+  const searchResult = await axios.get("http://localhost:5000/api/search", {
+    params: { band: band, album: album },
+  });
+  console.log(searchResult.data);
+  return searchResult.data;
 };
 
 export const fetchAndWait = async (url, delay) => {

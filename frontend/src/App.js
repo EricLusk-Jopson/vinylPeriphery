@@ -69,10 +69,6 @@ function App() {
   });
   const { band, album } = formData;
 
-  const consumer_key = "owJjvljKmrcdSbXFVPTu";
-  const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
-  const search_url = "https://api.discogs.com/database/search?";
-
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -102,6 +98,7 @@ function App() {
     // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
+      console.log(response);
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
@@ -676,7 +673,7 @@ function App() {
       )
     );
     console.log(data, displayResults);
-  }, [data, band, album, settings]);
+  }, [data, settings]);
 
   useEffect(() => {
     async function coolDownAfterFastSearch() {
