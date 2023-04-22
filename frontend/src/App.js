@@ -69,10 +69,6 @@ function App() {
   });
   const { band, album } = formData;
 
-  const consumer_key = "owJjvljKmrcdSbXFVPTu";
-  const consumer_secret = "wgJurrmQFbROAyrmByuLrZMRMhDznPaK";
-  const search_url = "https://api.discogs.com/database/search?";
-
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -453,12 +449,10 @@ function App() {
         if (settings.excludeProduction) {
           exclusions.push(...settings.productionRoles);
         }
-        console.log(settings, exclusions);
 
         if (newRoles.length > 0) {
           for (let i = 0; i < newRoles.length; i++) {
             for (let j = 0; j < exclusions.length; j++) {
-              console.log(newRoles[i].toLowerCase(), exclusions[j]);
               if (newRoles[i].toLowerCase().includes(exclusions[j])) {
                 newRoles.splice(i, 1);
                 i--;
@@ -675,8 +669,7 @@ function App() {
         (a, b) => b.contributors.length - a.contributors.length
       )
     );
-    console.log(data, displayResults);
-  }, [data, band, album, settings]);
+  }, [data, settings]);
 
   useEffect(() => {
     async function coolDownAfterFastSearch() {
