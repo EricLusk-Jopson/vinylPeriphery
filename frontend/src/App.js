@@ -98,7 +98,6 @@ function App() {
     // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
-      console.log(response);
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
@@ -450,12 +449,10 @@ function App() {
         if (settings.excludeProduction) {
           exclusions.push(...settings.productionRoles);
         }
-        console.log(settings, exclusions);
 
         if (newRoles.length > 0) {
           for (let i = 0; i < newRoles.length; i++) {
             for (let j = 0; j < exclusions.length; j++) {
-              console.log(newRoles[i].toLowerCase(), exclusions[j]);
               if (newRoles[i].toLowerCase().includes(exclusions[j])) {
                 newRoles.splice(i, 1);
                 i--;
@@ -672,7 +669,6 @@ function App() {
         (a, b) => b.contributors.length - a.contributors.length
       )
     );
-    console.log(data, displayResults);
   }, [data, settings]);
 
   useEffect(() => {

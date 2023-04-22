@@ -14,7 +14,6 @@ export const getSearchResult = async (band, album) => {
   const searchResult = await axios.get("http://localhost:5000/api/search", {
     params: { band: band, album: album },
   });
-  console.log(searchResult.data);
   return searchResult.data;
 };
 
