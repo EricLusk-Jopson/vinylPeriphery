@@ -6,8 +6,4 @@ hide loading more button when there is nothing more to loading
 
 add handling for failed searches on backend AND frontend (in UI)
 
-separate search modifiers from result filters in the settings
-
-style buttons for settings
-
 look into AWS for backend hosting

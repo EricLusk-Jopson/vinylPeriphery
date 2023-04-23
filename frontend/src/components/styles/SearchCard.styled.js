@@ -23,6 +23,6 @@ export const StlyedSearchButton = styled.button`
     props.active ? "red" : props.disabled ? "gray" : "white"};
 
   :hover {
-    background-color: red;
+    background-color: ${(props) => (props.disabled ? "gray" : "red")};
   }
 `;
