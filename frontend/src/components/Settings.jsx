@@ -4,6 +4,9 @@ import {
   StyledButton,
   StyledOptionsContainer,
   StyledSettings,
+  StyledSelect,
+  StyledOption,
+  StyledSettingGroup,
 } from "./styles/Settings.styled";
 
 const Settings = ({
@@ -15,102 +18,75 @@ const Settings = ({
   return (
     <StyledSettings displaySettings={displaySettings}>
       <StyledOptionsContainer>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+        <h3>Search Modifiers</h3>
+        <StyledSettingGroup>
           <label>Search Type</label>
-          <select
+          <StyledSelect
             name="searchType"
             value={settings.searchType}
             onChange={handleSettingsChange}
           >
-            <option value="fast">Fast</option>
-            <option value="comprehensive">Comprehensive</option>
-          </select>
-        </div>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+            <StyledOption value="fast">Fast</StyledOption>
+            <StyledOption value="comprehensive">Comprehensive</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
           <label>Exclude Production Staff</label>
-          <select
+          <StyledSelect
             name="excludeProduction"
             value={settings.excludeProduction}
             onChange={handleSettingsChange}
           >
-            <option value={true}>Yes</option>
-            <option value={false}>No</option>
-          </select>
-        </div>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <hr />
+        <h3>Result Filters</h3>
+        <StyledSettingGroup>
           <label>Exclude Searched Artist</label>
-          <select
+          <StyledSelect
             name="excludeArtist"
             value={settings.excludeArtist}
             onChange={handleSettingsChange}
           >
-            <option value={true}>Yes</option>
-            <option value={false}>No</option>
-          </select>
-        </div>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
           <label>Exclude Searched Album</label>
-          <select
+          <StyledSelect
             name="excludeAlbum"
             value={settings.excludeAlbum}
             onChange={handleSettingsChange}
           >
-            <option value={true}>Yes</option>
-            <option value={false}>No</option>
-          </select>
-        </div>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
           <label>Exclude Various</label>
-          <select
+          <StyledSelect
             name="excludeVarious"
             value={settings.excludeVarious}
             onChange={handleSettingsChange}
           >
-            <option value={true}>Yes</option>
-            <option value={false}>No</option>
-          </select>
-        </div>
-        <div
-          style={{
-            display: "inline-flex",
-            justifyContent: "space-between",
-          }}
-        >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
           <label>Require Two Or More Contributors</label>
-          <select
+          <StyledSelect
             name="excludeSolo"
             value={settings.excludeSolo}
             onChange={handleSettingsChange}
           >
-            <option value={true}>Yes</option>
-            <option value={false}>No</option>
-          </select>
-        </div>
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
       </StyledOptionsContainer>
 
       <ButtonWrapper>

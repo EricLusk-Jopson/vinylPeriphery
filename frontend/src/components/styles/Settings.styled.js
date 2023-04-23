@@ -26,6 +26,23 @@ export const StyledButton = styled.div`
   }
 `;
 
+export const StyledSelect = styled.select`
+  border: 2px solid black;
+  border-radius: 2px;
+  background-color: red;
+  color: black;
+`;
+
+export const StyledOption = styled.option`
+  background-color: red;
+  color: black;
+
+  :hover {
+    background-color: white;
+    color: black;
+  }
+`;
+
 export const StyledSettings = styled.div`
   position: fixed;
   width: 20vw;
@@ -45,8 +62,20 @@ export const StyledOptionsContainer = styled.div`
   flex-direction: column;
   justify-content: space-evenly;
   position: absolute;
-  left: 0;
+  left: 5px;
   top: 50%;
-  width: 80%;
-  height: 30%;
+  width: 75%;
+  height: 40%;
+  overflow: scroll;
+
+  hr {
+    width: 100%;
+    border: 2px solid black;
+  }
+`;
+
+export const StyledSettingGroup = styled.div`
+  display: inline-flex;
+  justify-content: space-between;
+  padding: 5px 0px;
 `;
