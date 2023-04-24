@@ -60,7 +60,7 @@ function App() {
     records: { isLoading: false, isComplete: false },
   });
   const [message, setMessage] = useState("");
-  const [page, setPage] = useState("");
+  const [page, setPage] = useState(0);
   const [activeSearch, setActiveSearch] = useState("");
   const [coolDown, setCooldown] = useState(false);
   const [formData, setFormData] = useState({
@@ -817,8 +817,8 @@ function App() {
           data={data}
           displayResults={displayResults}
           message={message}
-          currentPage={page}
           coolDown={coolDown}
+          disableLoadMore={data.every((artist) => artist.pages <= page)}
           loadMore={loadMore}
         />
       </div>
