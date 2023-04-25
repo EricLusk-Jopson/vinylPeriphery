@@ -2,8 +2,6 @@ look into pulling album art and content links
 
 today - add percentage rating for ratio of band members in project
 
-today - hide loading more button when there is nothing more to loading
-
 add handling for failed searches on backend AND frontend (in UI)
 
 look into AWS for backend hosting
