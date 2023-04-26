@@ -27,7 +27,7 @@ export const StyledResultCard = styled.div`
 
 export const StyledHeader = styled.div`
   display: grid;
-  grid-template-columns: 90% 10%;
+  grid-template-columns: 90% 5% 5%;
   grid-template-rows: 2rem 1.6rem;
   align-items: center;
   padding: 0px 20px;

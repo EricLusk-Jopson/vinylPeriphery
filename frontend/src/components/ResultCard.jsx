@@ -18,8 +18,9 @@ export const ResultCard = ({ title, artist, body, ratio }) => {
   return (
     <StyledResultCard>
       <StyledHeader onClick={toggleCollapse}>
-        <h4>{`${title}     (${ratio}%)`}</h4>
+        <h4>{title}</h4>
         <Icon>{open ? <FaCaretUp /> : <FaCaretDown />}</Icon>
+        <h4>{`${ratio}%`}</h4>
         <h5>{`By: ${artist}`}</h5>
       </StyledHeader>
       {open && (
