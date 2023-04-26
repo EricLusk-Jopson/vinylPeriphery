@@ -1,7 +1,13 @@
 import React from "react";
 import { ResultCard } from "./ResultCard";
 
-const Results = ({ data, displayResults, message, loadMore }) => {
+const Results = ({
+  data,
+  displayResults,
+  message,
+  disableLoadMore,
+  loadMore,
+}) => {
   return (
     <div
       className="results"
@@ -36,7 +42,7 @@ const Results = ({ data, displayResults, message, loadMore }) => {
         >
           {message}
         </div>
-        <button onClick={loadMore}>Load More</button>
+        {!disableLoadMore && <button onClick={loadMore}>Load More</button>}
         {displayResults.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}
@@ -48,6 +54,9 @@ const Results = ({ data, displayResults, message, loadMore }) => {
                 (contributor.roles.length > 0 && contributor.roles[0] !== ""
                   ? ` (${contributor.roles.join(", ")})`
                   : "")
+            )}
+            ratio={Math.round(
+              (100 * release.contributors.length) / data.length
             )}
           ></ResultCard>
         ))}
