@@ -15,13 +15,20 @@ export const ResultCard = ({ title, artist, body, ratio }) => {
     const op = open;
     setOpen(!op);
   };
+
+  const formattedArtist = (str) => {
+    let regex = /\s\(\d+\)/g;
+    let newStr = str.replace(regex, "");
+    return newStr;
+  };
+
   return (
     <StyledResultCard>
       <StyledHeader onClick={toggleCollapse}>
         <h4>{title}</h4>
         <Icon>{open ? <FaCaretUp /> : <FaCaretDown />}</Icon>
         <h4>{`${ratio}%`}</h4>
-        <h5>{`By: ${artist}`}</h5>
+        <h5>{`By: ${formattedArtist(artist)}`}</h5>
       </StyledHeader>
       {open && (
         <StyledBody>
