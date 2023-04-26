@@ -7,7 +7,7 @@ import {
   Icon,
 } from "./styles/ResultCard.styled";
 
-export const ResultCard = ({ title, artist, body }) => {
+export const ResultCard = ({ title, artist, body, ratio }) => {
   const [open, setOpen] = useState(false);
 
   const toggleCollapse = (e) => {
@@ -18,7 +18,7 @@ export const ResultCard = ({ title, artist, body }) => {
   return (
     <StyledResultCard>
       <StyledHeader onClick={toggleCollapse}>
-        <h4>{title}</h4>
+        <h4>{`${title}     (${ratio}%)`}</h4>
         <Icon>{open ? <FaCaretUp /> : <FaCaretDown />}</Icon>
         <h5>{`By: ${artist}`}</h5>
       </StyledHeader>

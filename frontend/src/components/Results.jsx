@@ -55,6 +55,9 @@ const Results = ({
                   ? ` (${contributor.roles.join(", ")})`
                   : "")
             )}
+            ratio={Math.round(
+              (100 * release.contributors.length) / data.length
+            )}
           ></ResultCard>
         ))}
       </div>
