@@ -1,5 +1,7 @@
 look into pulling album art and content links
 
+spotify is an option for this. Look into other options.
+
 add handling for failed searches on backend AND frontend (in UI)
 
 look into AWS for backend hosting
