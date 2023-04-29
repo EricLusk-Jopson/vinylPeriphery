@@ -4,3 +4,13 @@ look into pulling album art and content links
 spotify is an option for this. Look into other options.
 
 look into AWS for backend hosting
+
+add typescript support
+
+change queries to useQuery with react-queries
+
+add form validation with yup
+
+add form control with formik
+
+add jest testing for api calls and rendering components
