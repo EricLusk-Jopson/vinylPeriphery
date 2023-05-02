@@ -5,7 +5,12 @@ const LoadingBar = ({ isLoading, isComplete, text }) => {
   return (
     <StyledLoadingBar className="loading-bar">
       {text.split("").map((letter, i) => (
-        <StyledLetter isLoading={isLoading} isComplete={isComplete} delay={i}>
+        <StyledLetter
+          key={`${text}-${i}`}
+          isLoading={isLoading}
+          isComplete={isComplete}
+          delay={i}
+        >
           {letter}
         </StyledLetter>
       ))}

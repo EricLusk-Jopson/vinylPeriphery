@@ -11,10 +11,15 @@ export const createArtistRecord = (name, id, pages, releases, roles) => {
 };
 
 export const getSearchResult = async (band, album) => {
-  const searchResult = await axios.get("http://localhost:5000/api/search", {
-    params: { band: band, album: album },
-  });
-  return searchResult.data;
+  console.log("sending search request to localhost:5000...");
+  try {
+    const searchResult = await axios.get("http://localhost:5000/api/search", {
+      params: { band: band, album: album },
+    });
+    return searchResult.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const fetchAndWait = async (url, delay) => {
