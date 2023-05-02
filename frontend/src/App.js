@@ -621,6 +621,34 @@ function App() {
     setPage(newPage);
   };
 
+  const getAlbumArt = async () => {
+    try {
+      const musicBrainzUrl = `https://musicbrainz.org/ws/2/release/?query=release:${album.replace(
+        " ",
+        "%20"
+      )}&&artist:${band.replace(" ", "%20")}&fmt=json`;
+      const musicBrainzResponse = await fetch(musicBrainzUrl).then((res) =>
+        res.json()
+      );
+      if (
+        musicBrainzResponse.releases.length > 0 &&
+        musicBrainzResponse?.releases[0]?.id
+      ) {
+        const coverArtUrl = `http://coverartarchive.org/release/${musicBrainzResponse?.releases[0]?.id}`;
+        const coverArtResponse = await fetch(coverArtUrl).then((res) =>
+          res.json()
+        );
+
+        // ToDo: check for the existance of a thumbnail image first and use that if available
+        const coverArt = await fetch(coverArtResponse.images[0].image);
+
+        // TODO: figure out how to render an image
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const toggleSettingsModal = async () => {
     const isOpen = displaySettings;
     setDisplaySettings(!isOpen);
