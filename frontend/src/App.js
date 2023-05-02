@@ -106,119 +106,112 @@ function App() {
       setMessage("Retrieving album info...");
       console.log(response);
 
-      try {
-        const release = await fetchAndWait(
-          response.results[0].resource_url,
-          settings.searchSpeeds[settings.searchType]
-        );
+      const release = await fetchAndWait(
+        response.results[0].resource_url,
+        settings.searchSpeeds[settings.searchType]
+      );
 
-        temp = {
-          ...temp,
-          connect: { isLoading: false, isComplete: true },
-          artists: { isLoading: true, isComplete: false },
-        };
-        setLoadingStates(temp);
+      temp = {
+        ...temp,
+        connect: { isLoading: false, isComplete: true },
+        artists: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
 
-        let callCount = 2;
-        setMessage(
-          `Checking releases associated with ${release.artists.length} artist${
-            release.artists.length > 1 && "s"
-          }.`
-        );
-        let currentCount = callCount;
+      let callCount = 2;
+      setMessage(
+        `Checking releases associated with ${release.artists.length} artist${
+          release.artists.length > 1 && "s"
+        }.`
+      );
+      let currentCount = callCount;
 
-        const output = [];
-        temp = {
-          ...temp,
-          records: { isLoading: true, isComplete: false },
-        };
-        setLoadingStates(temp);
+      const output = [];
+      temp = {
+        ...temp,
+        records: { isLoading: true, isComplete: false },
+      };
+      setLoadingStates(temp);
 
-        let artistInc = 1;
-        // for every artist recorded in the response
-        for (const artist of release.artists) {
-          if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
-            setMessage("call limit exceeded. Terminating search...");
-            break;
-          }
-
-          try {
-            // fetch their information
-            setMessage(
-              `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
-            );
-            const artistResponse = await fetchAndWait(
-              artist.resource_url,
-              settings.searchSpeeds[settings.searchType]
-            );
-            currentCount++;
-
-            // fetch their releases
-            setMessage(
-              `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
-            );
-            const releasesResponse = await fetchAndWait(
-              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
-              settings.searchSpeeds[settings.searchType]
-            );
-            currentCount++;
-
-            if (
-              releasesResponse &&
-              releasesResponse.releases &&
-              releasesResponse.pagination
-            ) {
-              const pages =
-                releasesResponse.pagination.urls?.last !== undefined
-                  ? releasesResponse.pagination.urls?.last?.split(/(\=|\&)/)[2]
-                  : 1;
-              const newArtist = createArtistRecord(
-                artist.name,
-                artist.id,
-                getPages(releasesResponse),
-                releasesResponse.releases,
-                artist.roles ?? [""]
-              );
-              output.push(newArtist);
-            }
-            temp = {
-              ...temp,
-              artists: { isLoading: false, isComplete: true },
-              records: { isLoading: false, isComplete: true },
-            };
-            setLoadingStates(temp);
-          } catch (error) {
-            console.error(`Error: ${error}`);
-            temp = {
-              ...temp,
-              artists: { isLoading: false, isComplete: false },
-              records: { isLoading: false, isComplete: false },
-            };
-            setLoadingStates(temp);
-          }
-          artistInc++;
+      let artistInc = 1;
+      // for every artist recorded in the response
+      for (const artist of release.artists) {
+        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          setMessage("call limit exceeded. Terminating search...");
+          break;
         }
-        setData(output);
-        if (searchFlag) {
-          setCooldown(true);
+
+        try {
+          // fetch their information
+          setMessage(
+            `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
+          const artistResponse = await fetchAndWait(
+            artist.resource_url,
+            settings.searchSpeeds[settings.searchType]
+          );
+          currentCount++;
+
+          // fetch their releases
+          setMessage(
+            `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          );
+          const releasesResponse = await fetchAndWait(
+            `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+            settings.searchSpeeds[settings.searchType]
+          );
+          currentCount++;
+
+          if (
+            releasesResponse &&
+            releasesResponse.releases &&
+            releasesResponse.pagination
+          ) {
+            const pages =
+              releasesResponse.pagination.urls?.last !== undefined
+                ? releasesResponse.pagination.urls?.last?.split(/(\=|\&)/)[2]
+                : 1;
+            const newArtist = createArtistRecord(
+              artist.name,
+              artist.id,
+              getPages(releasesResponse),
+              releasesResponse.releases,
+              artist.roles ?? [""]
+            );
+            output.push(newArtist);
+          }
+          temp = {
+            ...temp,
+            artists: { isLoading: false, isComplete: true },
+            records: { isLoading: false, isComplete: true },
+          };
+          setLoadingStates(temp);
+        } catch (error) {
+          console.error(`Error: ${error}`);
+          temp = {
+            ...temp,
+            artists: { isLoading: false, isComplete: false },
+            records: { isLoading: false, isComplete: false },
+          };
+          setLoadingStates(temp);
         }
-        setPage(1);
-        setActiveSearch("");
-      } catch (error) {
-        console.log(error);
-        temp = {
-          ...temp,
-          connect: { isLoading: false, isComplete: false },
-          artists: { isLoading: false, isComplete: false },
-        };
+        artistInc++;
       }
+      setData(output);
+      if (searchFlag) {
+        setCooldown(true);
+      }
+      setPage(1);
+      setActiveSearch("");
     } catch (error) {
+      console.log(error);
       temp = {
         ...temp,
         connect: { isLoading: false, isComplete: false },
+        artists: { isLoading: false, isComplete: false },
       };
       setLoadingStates(temp);
-      console.log(error);
+      setActiveSearch("");
     }
   };
 
@@ -327,6 +320,8 @@ function App() {
                   output.push(newArtist);
                 }
               } catch (error) {
+                // TODO: Figure out what currently happens when this executes
+                // What we WANT to happen:
                 console.error(
                   `Error fetching ${member.resource_url}: ${error}`
                 );
@@ -362,6 +357,8 @@ function App() {
             }
           }
         } catch (error) {
+          // TODO: This code needs to be tested
+          // If failure occurs, add member name to a list of failed searches for immediate alert and detailed summary later.
           console.error(`Error: ${error}`);
         }
         artistInc++;
@@ -384,6 +381,7 @@ function App() {
         connect: { isLoading: false, isComplete: false },
       };
       setLoadingStates(temp);
+      setActiveSearch("");
       console.log(error);
     }
   };
@@ -530,6 +528,8 @@ function App() {
             output.push(newArtist);
           }
         } catch (error) {
+          // TODO: This code needs to be tested
+          // If failure occurs, add contributor name to a list of failed searches for immediate alert and detailed summary later.
           console.log(`Error: ${error}`);
         }
         contributorInc++;
@@ -554,6 +554,7 @@ function App() {
         records: { isLoading: false, isComplete: false },
       };
       setLoadingStates(temp);
+      setActiveSearch("");
     }
   };
 
@@ -584,7 +585,11 @@ function App() {
           `https://api.discogs.com/artists/${artist.id}/releases?page=${newPage}&per_page=100`
         )
           .then((res) => res.json())
-          .catch((err) => console.log(err));
+          .catch((err) => {
+            console.log(err);
+            // TODO: This code needs to be tested
+            // If failure occurs, add artist name to a list of failed searches for immediate alert and detailed summary later.
+          });
         await new Promise((resolve) =>
           setTimeout(resolve, settings.searchSpeeds[settings.searchType])
         );
