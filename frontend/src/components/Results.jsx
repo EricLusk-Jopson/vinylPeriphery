@@ -7,6 +7,7 @@ const Results = ({
   message,
   disableLoadMore,
   loadMore,
+  loadCoverArt,
 }) => {
   return (
     <div
@@ -58,6 +59,7 @@ const Results = ({
             ratio={Math.round(
               (100 * release.contributors.length) / data.length
             )}
+            loadCoverArt={loadCoverArt}
           ></ResultCard>
         ))}
       </div>

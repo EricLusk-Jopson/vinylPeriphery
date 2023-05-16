@@ -44,6 +44,9 @@ export const Icon = styled.span`
 `;
 
 export const StyledBody = styled.div`
+  // display: flex;
+  // flex-direction: row;
+
   padding: 0px 20px;
   height: fit-content;
 `;
