@@ -621,15 +621,20 @@ function App() {
     setPage(newPage);
   };
 
+  // TODO: Move this to another file
   const getAlbumArt = async (album, band) => {
     try {
-      const musicBrainzUrl = `https://musicbrainz.org/ws/2/release/?query=release:${album.replace(
+      const musicBrainzUrl = `https://musicbrainz.org/ws/2/release/?query=release:${album.replaceAll(
         " ",
         "%20"
-      )}&&artist:${band.replace(" ", "%20")}&fmt=json`;
+      )}&artist:${band.replaceAll(" ", "%20")}&fmt=json`;
+      console.log(musicBrainzUrl);
       const musicBrainzResponse = await fetch(musicBrainzUrl).then((res) =>
         res.json()
       );
+      console.log(musicBrainzResponse);
+      // TODO filter results that match the album and band
+      // TODO iterate through results so that a valid coverArtResponse is found
       if (
         musicBrainzResponse.releases.length > 0 &&
         musicBrainzResponse?.releases[0]?.id
@@ -641,7 +646,6 @@ function App() {
 
         console.log(coverArtResponse);
 
-        // ToDo: check for the existance of a thumbnail image first and use that if available
         let coverArt;
         if (coverArtResponse.images[0].thumbnails.small) {
           coverArt = await fetch(coverArtResponse.images[0].thumbnails.small);
@@ -651,7 +655,6 @@ function App() {
 
         console.log(coverArt);
 
-        // TODO: figure out how to render an image
         if (coverArt.url && coverArt.status === 200) {
           return coverArt.url;
         }

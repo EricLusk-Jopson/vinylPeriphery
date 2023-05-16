@@ -9,7 +9,11 @@ import {
 
 export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
   const [open, setOpen] = useState(false);
-  const [albumArt, setAlbumArt] = useState(null);
+  const [albumArtInfo, setAlbumArtInfo] = useState({
+    title: "",
+    artist: "",
+    art: "",
+  });
 
   const toggleCollapse = (e) => {
     e.preventDefault();
@@ -24,16 +28,26 @@ export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
   };
 
   useEffect(() => {
-    async function fetchdata(title, artist) {
+    const fetchdata = async (title, artist) => {
       const art = await loadCoverArt(title, artist);
       console.log(art);
-      setAlbumArt(art);
-    }
+      setAlbumArtInfo({
+        title: title,
+        artist: artist,
+        url: art,
+      });
+    };
 
-    if (open && !albumArt) {
+    if (
+      (open &&
+        albumArtInfo.title === "" &&
+        albumArtInfo.artist === "" &&
+        albumArtInfo.url === "") ||
+      (open && (albumArtInfo.title !== title || albumArtInfo.artist !== artist))
+    ) {
       fetchdata(title, artist);
     }
-  }, [open]);
+  }, [open, title, artist, albumArtInfo]);
 
   return (
     <StyledResultCard>
@@ -46,7 +60,7 @@ export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
       {open && (
         // TODO amend styled body to space on row and include future content links.
         <StyledBody>
-          <img src={albumArt} alt="album cover art" />
+          <img src={albumArtInfo.url} alt="album cover art" />
           <p>Featuring: </p>
           {body.map((text, i) => (
             <p key={`featured-${i}`}>{text}</p>
