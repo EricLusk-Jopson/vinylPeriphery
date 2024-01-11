@@ -20,7 +20,7 @@ export const StyledContent = styled.div`
 export const StlyedSearchButton = styled.button`
   margin: 1em 0;
   background-color: ${(props) =>
-    props.active ? "red" : props.disabled ? "gray" : "white"};
+    props.active ? "gray" : props.disabled ? "gray" : "white"};
 
   :hover {
     background-color: ${(props) => (props.disabled ? "gray" : "red")};

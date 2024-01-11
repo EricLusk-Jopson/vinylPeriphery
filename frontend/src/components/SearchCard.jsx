@@ -9,6 +9,7 @@ const SearchCard = ({
   btnFnc,
   btnText = "Search",
 }) => {
+  console.log(active, disabled);
   return (
     <div className="card" style={{ width: "25%" }}>
       <StyledContent active={active} disabled={disabled}>

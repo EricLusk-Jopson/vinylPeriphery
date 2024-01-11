@@ -192,6 +192,10 @@ function App() {
             artists: { isLoading: false, isComplete: false },
             records: { isLoading: false, isComplete: false },
           };
+          setActiveSearch("");
+          setMessage(
+            "an error was encountered fetching artist releases. Please try again"
+          );
           setLoadingStates(temp);
         }
         artistInc++;
@@ -203,10 +207,15 @@ function App() {
       setPage(1);
       setActiveSearch("");
     } catch (error) {
+      console.log("an error was encountered");
       temp = {
         ...temp,
         connect: { isLoading: false, isComplete: false },
       };
+      setActiveSearch("");
+      setMessage(
+        "an error was encountered securing a connection. Please try again"
+      );
       setLoadingStates(temp);
       console.log(error);
     }
@@ -320,6 +329,17 @@ function App() {
                 console.error(
                   `Error fetching ${member.resource_url}: ${error}`
                 );
+                setActiveSearch("");
+                setMessage(
+                  "an error was encountered fetching member releases. Please try again"
+                );
+                temp = {
+                  ...temp,
+                  connect: { isLoading: false, isComplete: false },
+                  members: { isLoading: false, isComplete: false },
+                  records: { isLoading: false, isComplete: false },
+                };
+                setLoadingStates(temp);
               }
               memberInc++;
             }
@@ -352,6 +372,17 @@ function App() {
             }
           }
         } catch (error) {
+          setActiveSearch("");
+          setMessage(
+            "an error was encountered fetching artists. Please try again"
+          );
+          temp = {
+            ...temp,
+            connect: { isLoading: false, isComplete: false },
+            members: { isLoading: false, isComplete: false },
+            records: { isLoading: false, isComplete: false },
+          };
+          setLoadingStates(temp);
           console.error(`Error: ${error}`);
         }
         artistInc++;
@@ -373,6 +404,8 @@ function App() {
         ...temp,
         connect: { isLoading: false, isComplete: false },
       };
+      setActiveSearch("");
+      setMessage("an error was encountered while connecting. Please try again");
       setLoadingStates(temp);
       console.log(error);
     }
@@ -520,6 +553,17 @@ function App() {
             output.push(newArtist);
           }
         } catch (error) {
+          setActiveSearch("");
+          setMessage(
+            "an error was encountered fetching contributors. Please try again"
+          );
+          temp = {
+            ...temp,
+            connect: { isLoading: false, isComplete: false },
+            members: { isLoading: false, isComplete: false },
+            records: { isLoading: false, isComplete: false },
+          };
+          setLoadingStates(temp);
           console.log(`Error: ${error}`);
         }
         contributorInc++;
@@ -538,8 +582,11 @@ function App() {
       setPage(1);
     } catch (error) {
       console.log(error);
+      setActiveSearch("");
+      setMessage("an error was encountered connecting. Please try again");
       temp = {
         ...temp,
+        connect: { isLoading: false, isComplete: false },
         credits: { isLoading: false, isComplete: false },
         records: { isLoading: false, isComplete: false },
       };
