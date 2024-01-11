@@ -866,7 +866,8 @@ function App() {
         <div
           className="lower-search"
           style={{
-            minHeight: "40vh",
+            minHeight: "35vh",
+            height: "40vh",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-evenly",
@@ -874,6 +875,7 @@ function App() {
             color: "white",
             paddingTop: "30px",
             boxSizing: "border-box",
+            overflowY: "auto",
           }}
         >
           <MediaQuery maxWidth={500}>
