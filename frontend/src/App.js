@@ -1,3 +1,7 @@
+import MediaQuery from "react-responsive";
+import { IconButton } from "@mui/material";
+import NavigateBefore from "@mui/icons-material/ArrowLeft";
+import NavigateNext from "@mui/icons-material/ArrowRight";
 import { useState, useEffect, React } from "react";
 import {
   getSearchResult,
@@ -721,11 +725,59 @@ function App() {
   useEffect(() => {
     async function coolDownAfterFastSearch() {
       if (coolDown) {
-        await new Promise(() => setTimeout(() => setCooldown(false), 60000));
+        await new Promise(() =>
+          setTimeout(() => {
+            setCooldown(false);
+            setLoadingStates({
+              connect: { isLoading: false, isComplete: false },
+              artists: { isLoading: false, isComplete: false },
+              members: { isLoading: false, isComplete: false },
+              credits: { isLoading: false, isComplete: false },
+              records: { isLoading: false, isComplete: false },
+            });
+          }, 60000)
+        );
       }
     }
     coolDownAfterFastSearch();
   }, [coolDown]);
+
+  const cards = [
+    {
+      title: "Artist",
+      body: "Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results.",
+      btnFnc: bandReleases,
+      active: activeSearch === "band",
+      disabled: (activeSearch !== "" && activeSearch !== "band") || coolDown,
+    },
+    {
+      title: "Members",
+      body: "Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups.",
+      btnFnc: memberReleases,
+      active: activeSearch === "member",
+      disabled: (activeSearch !== "" && activeSearch !== "member") || coolDown,
+    },
+    {
+      title: "Credits",
+      body: "Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform.",
+      btnFnc: contributorReleases,
+      active: activeSearch === "contributor",
+      disabled:
+        (activeSearch !== "" && activeSearch !== "contributor") || coolDown,
+    },
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % cards.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex(
+      (prevIndex) => (prevIndex - 1 + cards.length) % cards.length
+    );
+  };
 
   return (
     <>
@@ -814,7 +866,7 @@ function App() {
         <div
           className="lower-search"
           style={{
-            height: "40vh",
+            minHeight: "40vh",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-evenly",
@@ -824,40 +876,96 @@ function App() {
             boxSizing: "border-box",
           }}
         >
-          <SearchCard
-            title="Artist"
-            body="Returns a collection of all releases associated with the
+          <MediaQuery maxWidth={500}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                textAlign: "center",
+                width: "100%",
+              }}
+            >
+              <IconButton
+                onClick={handlePrev}
+                style={{
+                  color: "inherit",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <NavigateBefore />
+              </IconButton>
+              {cards.map((card, index) => (
+                <div
+                  key={index}
+                  style={{ display: index === currentIndex ? "block" : "none" }}
+                >
+                  <SearchCard
+                    title={card.title}
+                    body={card.body}
+                    btnFnc={card.btnFnc}
+                    active={card.active}
+                    disabled={card.disabled}
+                  />
+                </div>
+              ))}
+              <IconButton
+                onClick={handleNext}
+                style={{
+                  color: "inherit",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <NavigateNext />
+              </IconButton>
+            </div>
+          </MediaQuery>
+
+          {/* Render normally for screens above 500px */}
+          <MediaQuery minWidth={501}>
+            <SearchCard
+              title="Artist"
+              body="Returns a collection of all releases associated with the
                 band/artist. This is the fastest available search and typically
                 yields the smallest set of results."
-            btnFnc={bandReleases}
-            active={activeSearch === "band"}
-            disabled={
-              (activeSearch !== "" && activeSearch !== "band") || coolDown
-            }
-          />
-          <SearchCard
-            title="Members"
-            body="Returns a collection of all releases from each of the band's
+              btnFnc={bandReleases}
+              active={activeSearch === "band"}
+              disabled={
+                (activeSearch !== "" && activeSearch !== "band") || coolDown
+              }
+            />
+            <SearchCard
+              title="Members"
+              body="Returns a collection of all releases from each of the band's
             members. This search may take longer for large and/or long-running
             groups."
-            btnFnc={memberReleases}
-            active={activeSearch === "member"}
-            disabled={
-              (activeSearch !== "" && activeSearch !== "member") || coolDown
-            }
-          />
-          <SearchCard
-            title="Credits"
-            body="Returns all releases associated with the record's credited
+              btnFnc={memberReleases}
+              active={activeSearch === "member"}
+              disabled={
+                (activeSearch !== "" && activeSearch !== "member") || coolDown
+              }
+            />
+            <SearchCard
+              title="Credits"
+              body="Returns all releases associated with the record's credited
             artists, including session musicians. This search may take over a
             minute to perform."
-            btnFnc={contributorReleases}
-            active={activeSearch === "contributor"}
-            disabled={
-              (activeSearch !== "" && activeSearch !== "contributor") ||
-              coolDown
-            }
-          />
+              btnFnc={contributorReleases}
+              active={activeSearch === "contributor"}
+              disabled={
+                (activeSearch !== "" && activeSearch !== "contributor") ||
+                coolDown
+              }
+            />
+          </MediaQuery>
         </div>
         <CoolDownTimer coolDown={coolDown} />
         <Results

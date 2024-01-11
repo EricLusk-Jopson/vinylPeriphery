@@ -11,7 +11,16 @@ const SearchCard = ({
 }) => {
   console.log(active, disabled);
   return (
-    <div className="card" style={{ width: "25%" }}>
+    <div
+      className="card"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        padding: "4vw",
+        alignContent: "center",
+        justifyContent: "center",
+      }}
+    >
       <StyledContent active={active} disabled={disabled}>
         <h1>{title}</h1>
         <p>{body}</p>

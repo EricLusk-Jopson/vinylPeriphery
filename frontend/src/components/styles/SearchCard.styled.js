@@ -1,6 +1,9 @@
 import styled from "styled-components";
 
 export const StyledContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   background-size: 200% 200%;
   background-image: linear-gradient(
     to top right,
