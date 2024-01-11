@@ -1,4 +1,4 @@
-import { useState, React, useEffect } from "react";
+import { useState, React } from "react";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 import {
   StyledResultCard,
@@ -7,13 +7,8 @@ import {
   Icon,
 } from "./styles/ResultCard.styled";
 
-export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
+export const ResultCard = ({ title, artist, body, ratio }) => {
   const [open, setOpen] = useState(false);
-  const [albumArtInfo, setAlbumArtInfo] = useState({
-    title: "",
-    artist: "",
-    art: "",
-  });
 
   const toggleCollapse = (e) => {
     e.preventDefault();
@@ -27,28 +22,6 @@ export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
     return newStr;
   };
 
-  useEffect(() => {
-    const fetchdata = async (title, artist) => {
-      const art = await loadCoverArt(title, artist);
-      console.log(art);
-      setAlbumArtInfo({
-        title: title,
-        artist: artist,
-        url: art,
-      });
-    };
-
-    if (
-      (open &&
-        albumArtInfo.title === "" &&
-        albumArtInfo.artist === "" &&
-        albumArtInfo.url === "") ||
-      (open && (albumArtInfo.title !== title || albumArtInfo.artist !== artist))
-    ) {
-      fetchdata(title, artist);
-    }
-  }, [open, title, artist, albumArtInfo]);
-
   return (
     <StyledResultCard>
       <StyledHeader onClick={toggleCollapse}>
@@ -60,7 +33,6 @@ export const ResultCard = ({ title, artist, body, ratio, loadCoverArt }) => {
       {open && (
         // TODO amend styled body to space on row and include future content links.
         <StyledBody>
-          <img src={albumArtInfo.url} alt="album cover art" />
           <p>Featuring: </p>
           {body.map((text, i) => (
             <p key={`featured-${i}`}>{text}</p>

@@ -90,7 +90,9 @@ const Settings = ({
       </StyledOptionsContainer>
 
       <ButtonWrapper>
-        <StyledButton onClick={toggleSettingsModal}>Settings</StyledButton>
+        <StyledButton onClick={toggleSettingsModal}>
+          {"settings.settings.settings.settings.settings.settings.settings."}
+        </StyledButton>
       </ButtonWrapper>
     </StyledSettings>
   );

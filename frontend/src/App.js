@@ -13,7 +13,6 @@ import Settings from "./components/Settings";
 import Results from "./components/Results";
 import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
 import { getPages } from "./helpers/getPages";
-import { getAlbumArt } from "./helpers/getAlbumArt";
 
 function App() {
   const [data, setData] = useState([]);
@@ -836,7 +835,6 @@ function App() {
           coolDown={coolDown}
           disableLoadMore={data.every((artist) => artist.pages <= page)}
           loadMore={loadMore}
-          loadCoverArt={getAlbumArt}
         />
       </div>
     </>

@@ -45,11 +45,11 @@ export const StyledOption = styled.option`
 
 export const StyledSettings = styled.div`
   position: fixed;
-  width: 20vw;
-  height: 60vw;
+  width: 300px;
+  height: 500px;
   background-color: red;
-  top: -30vw;
-  left: 65%;
+  top: -100px;
+  left: calc(100% - 500px);
   transform-origin: 100% 50%;
   rotate: ${(props) => (props.displaySettings ? "0deg" : "83deg")};
   z-index: 10;
@@ -63,10 +63,10 @@ export const StyledOptionsContainer = styled.div`
   justify-content: space-evenly;
   position: absolute;
   left: 5px;
-  top: 50%;
+  bottom: 30px;
+  height: 30%
   width: 75%;
-  height: 40%;
-  overflow: scroll;
+  overflow-y: scroll;
 
   hr {
     width: 100%;
