@@ -86,6 +86,19 @@ function App() {
   };
 
   const bandReleases = async () => {
+    if (band === "" || album === "") {
+      let temp = {
+        connect: { isLoading: false, isComplete: false },
+        artists: { isLoading: false, isComplete: false },
+        members: { isLoading: false, isComplete: false },
+        credits: { isLoading: false, isComplete: false },
+        records: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+      setActiveSearch("");
+      setMessage("Please enter a band and album");
+      return;
+    }
     const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("band");
     // Set temp and message
@@ -226,6 +239,19 @@ function App() {
   };
 
   const memberReleases = async () => {
+    if (band === "" || album === "") {
+      let temp = {
+        connect: { isLoading: false, isComplete: false },
+        artists: { isLoading: false, isComplete: false },
+        members: { isLoading: false, isComplete: false },
+        credits: { isLoading: false, isComplete: false },
+        records: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+      setActiveSearch("");
+      setMessage("Please enter a band and album");
+      return;
+    }
     const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("member");
     let temp = {
@@ -416,6 +442,19 @@ function App() {
   };
 
   const contributorReleases = async () => {
+    if (band === "" || album === "") {
+      let temp = {
+        connect: { isLoading: false, isComplete: false },
+        artists: { isLoading: false, isComplete: false },
+        members: { isLoading: false, isComplete: false },
+        credits: { isLoading: false, isComplete: false },
+        records: { isLoading: false, isComplete: false },
+      };
+      setLoadingStates(temp);
+      setActiveSearch("");
+      setMessage("Please enter a band and album");
+      return;
+    }
     const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("contributor");
     let temp = {
@@ -839,18 +878,18 @@ function App() {
             }}
           >
             <StyledInput
-              text="Artist"
-              placeholder="Viagra Boys"
-              onChange={onChange}
-              name="band"
-              value={band}
-            ></StyledInput>
-            <StyledInput
               text="Album"
-              placeholder="Cave World"
+              placeholder="Album"
               onChange={onChange}
               name="album"
               value={album}
+            ></StyledInput>
+            <StyledInput
+              text="Artist"
+              placeholder="Band"
+              onChange={onChange}
+              name="band"
+              value={band}
             ></StyledInput>
           </div>
           <Settings
