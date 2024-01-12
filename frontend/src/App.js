@@ -119,7 +119,6 @@ function App() {
     // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
-      console.log(response);
       if (response.results.length <= 0) {
         resetSearch("No release was found using the provided band and album");
         return;
