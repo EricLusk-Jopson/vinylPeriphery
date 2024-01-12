@@ -73,7 +73,7 @@ const Results = ({
         >
           {message}
         </div>
-        {!disableLoadMore && <button onClick={loadMore}>Load More</button>}
+        {/* {!disableLoadMore && <button onClick={loadMore}>Load More</button>} */}
         {displayResults.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}
