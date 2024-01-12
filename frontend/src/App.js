@@ -85,18 +85,22 @@ function App() {
     else return false;
   };
 
+  const resetSearch = (message) => {
+    let temp = {
+      connect: { isLoading: false, isComplete: false },
+      artists: { isLoading: false, isComplete: false },
+      members: { isLoading: false, isComplete: false },
+      credits: { isLoading: false, isComplete: false },
+      records: { isLoading: false, isComplete: false },
+    };
+    setLoadingStates(temp);
+    setActiveSearch("");
+    setMessage(message);
+  };
+
   const bandReleases = async () => {
     if (band === "" || album === "") {
-      let temp = {
-        connect: { isLoading: false, isComplete: false },
-        artists: { isLoading: false, isComplete: false },
-        members: { isLoading: false, isComplete: false },
-        credits: { isLoading: false, isComplete: false },
-        records: { isLoading: false, isComplete: false },
-      };
-      setLoadingStates(temp);
-      setActiveSearch("");
-      setMessage("Please enter a band and album");
+      resetSearch("Please enter a band and album");
       return;
     }
     const searchFlag = settings.searchType === "fast" ? true : false;
@@ -115,6 +119,11 @@ function App() {
     // try to get searchResult
     try {
       const response = await getSearchResult(band, album);
+      console.log(response);
+      if (response.results.length <= 0) {
+        resetSearch("No release was found using the provided band and album");
+        return;
+      }
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
@@ -224,32 +233,13 @@ function App() {
       setPage(1);
       setActiveSearch("");
     } catch (error) {
-      console.log("an error was encountered");
-      temp = {
-        ...temp,
-        connect: { isLoading: false, isComplete: false },
-      };
-      setActiveSearch("");
-      setMessage(
-        "an error was encountered securing a connection. Please try again"
-      );
-      setLoadingStates(temp);
-      console.log(error);
+      resetSearch("An error occurred while connecting.");
     }
   };
 
   const memberReleases = async () => {
     if (band === "" || album === "") {
-      let temp = {
-        connect: { isLoading: false, isComplete: false },
-        artists: { isLoading: false, isComplete: false },
-        members: { isLoading: false, isComplete: false },
-        credits: { isLoading: false, isComplete: false },
-        records: { isLoading: false, isComplete: false },
-      };
-      setLoadingStates(temp);
-      setActiveSearch("");
-      setMessage("Please enter a band and album");
+      resetSearch("Please enter a band and album");
       return;
     }
     const searchFlag = settings.searchType === "fast" ? true : false;
@@ -265,6 +255,10 @@ function App() {
     setMessage("Searching for album...");
     try {
       const response = await getSearchResult(band, album);
+      if (response.results.length <= 0) {
+        resetSearch("No release was found using the provided band and album");
+        return;
+      }
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
@@ -430,29 +424,15 @@ function App() {
       setPage(1);
       setActiveSearch("");
     } catch (error) {
-      temp = {
-        ...temp,
-        connect: { isLoading: false, isComplete: false },
-      };
-      setActiveSearch("");
-      setMessage("an error was encountered while connecting. Please try again");
-      setLoadingStates(temp);
-      console.log(error);
+      resetSearch(
+        "an error was encountered while connecting. Please try again"
+      );
     }
   };
 
   const contributorReleases = async () => {
     if (band === "" || album === "") {
-      let temp = {
-        connect: { isLoading: false, isComplete: false },
-        artists: { isLoading: false, isComplete: false },
-        members: { isLoading: false, isComplete: false },
-        credits: { isLoading: false, isComplete: false },
-        records: { isLoading: false, isComplete: false },
-      };
-      setLoadingStates(temp);
-      setActiveSearch("");
-      setMessage("Please enter a band and album");
+      resetSearch("Please enter a band and album");
       return;
     }
     const searchFlag = settings.searchType === "fast" ? true : false;
@@ -469,6 +449,10 @@ function App() {
     let callCount = 1;
     try {
       const response = await getSearchResult(band, album);
+      if (response.results.length <= 0) {
+        resetSearch("No release was found using the provided band and album");
+        return;
+      }
       await new Promise((resolve) =>
         setTimeout(resolve, settings.searchSpeeds[settings.searchType])
       );
@@ -500,7 +484,7 @@ function App() {
       const output = [];
 
       if (!release.extraartists || release.extraartists.length === 0) {
-        setMessage(
+        resetSearch(
           "Couldn't locate a list of credited artists for this album :("
         );
         return [];
@@ -596,18 +580,8 @@ function App() {
             output.push(newArtist);
           }
         } catch (error) {
-          setActiveSearch("");
-          setMessage(
-            "an error was encountered fetching contributors. Please try again"
-          );
-          temp = {
-            ...temp,
-            connect: { isLoading: false, isComplete: false },
-            members: { isLoading: false, isComplete: false },
-            records: { isLoading: false, isComplete: false },
-          };
-          setLoadingStates(temp);
-          console.log(`Error: ${error}`);
+          resetSearch("an error occurred while fetching contributors");
+          break;
         }
         contributorInc++;
       }
@@ -624,16 +598,7 @@ function App() {
       setActiveSearch("");
       setPage(1);
     } catch (error) {
-      console.log(error);
-      setActiveSearch("");
-      setMessage("an error was encountered connecting. Please try again");
-      temp = {
-        ...temp,
-        connect: { isLoading: false, isComplete: false },
-        credits: { isLoading: false, isComplete: false },
-        records: { isLoading: false, isComplete: false },
-      };
-      setLoadingStates(temp);
+      resetSearch("An error occurred while connecting.");
     }
   };
 

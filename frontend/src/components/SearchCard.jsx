@@ -22,7 +22,6 @@ const SearchCard = ({
     }
   };
 
-  console.log(active, disabled);
   return (
     <div
       className="card"
