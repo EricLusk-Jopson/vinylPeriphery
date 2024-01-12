@@ -1,4 +1,4 @@
-import { useState, React } from "react";
+import React from "react";
 import { FaCaretDown, FaCaretUp } from "react-icons/fa";
 import {
   StyledResultCard,
@@ -7,15 +7,14 @@ import {
   Icon,
 } from "./styles/ResultCard.styled";
 
-export const ResultCard = ({ title, artist, body, ratio }) => {
-  const [open, setOpen] = useState(false);
-
-  const toggleCollapse = (e) => {
-    e.preventDefault();
-    const op = open;
-    setOpen(!op);
-  };
-
+export const ResultCard = ({
+  title,
+  artist,
+  body,
+  ratio,
+  isOpen,
+  toggleCard,
+}) => {
   const formattedArtist = (str) => {
     let regex = /\s\(\d+\)/g;
     let newStr = str.replace(regex, "");
@@ -24,13 +23,13 @@ export const ResultCard = ({ title, artist, body, ratio }) => {
 
   return (
     <StyledResultCard>
-      <StyledHeader onClick={toggleCollapse}>
+      <StyledHeader onClick={toggleCard}>
         <h4>{title}</h4>
-        <Icon>{open ? <FaCaretUp /> : <FaCaretDown />}</Icon>
+        <Icon>{isOpen ? <FaCaretUp /> : <FaCaretDown />}</Icon>
         <h4>{`${ratio}%`}</h4>
         <h5>{`By: ${formattedArtist(artist)}`}</h5>
       </StyledHeader>
-      {open && (
+      {isOpen && (
         <StyledBody>
           <p>Featuring: </p>
           {body.map((text, i) => (

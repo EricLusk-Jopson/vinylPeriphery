@@ -1,3 +1,9 @@
+/* Bebas Neue */
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap");
+
+/* Monda */
+@import url("https://fonts.googleapis.com/css2?family=Monda&display=swap");
+
 /* Works on Firefox */
 * {
   scrollbar-width: none;
@@ -24,12 +30,8 @@
 
 body {
   margin: 0;
-  font-family: 'Gill Sans',
-    sans-serif, monospace;
+  font-family: "Bebas Neue", sans-serif, monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: black;
 }
-
-
-

@@ -9,6 +9,19 @@ const SearchCard = ({
   btnFnc,
   btnText = "Search",
 }) => {
+  const handleButtonClick = () => {
+    // Scroll down 10vh on button click
+    window.scrollTo({
+      top: window.pageYOffset + window.innerHeight * 0.1,
+      behavior: "smooth",
+    });
+
+    // Call the original button click function (if provided)
+    if (btnFnc) {
+      btnFnc();
+    }
+  };
+
   console.log(active, disabled);
   return (
     <div
@@ -16,19 +29,19 @@ const SearchCard = ({
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: "4vw",
+        padding: "1vw",
         alignContent: "center",
         justifyContent: "center",
       }}
     >
       <StyledContent active={active} disabled={disabled}>
-        <h1>{title}</h1>
+        <h1 className="blocky-title bebas-neue">{title}</h1>
         <p>{body}</p>
       </StyledContent>
       <div className="progress">
         <StlyedSearchButton
           active={active}
-          onClick={btnFnc}
+          onClick={handleButtonClick}
           disabled={disabled}
         >
           {btnText}

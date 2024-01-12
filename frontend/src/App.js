@@ -787,12 +787,9 @@ function App() {
           display: "flex",
           flexDirection: "column",
           overflowX: "hidden",
+          fontFamily: "Monda",
         }}
       >
-        <div
-          className="red-angle"
-          style={{ position: "absolute", top: 0, left: 0 }}
-        ></div>
         <div
           className="upper-search"
           style={{
@@ -863,17 +860,17 @@ function App() {
             displaySettings={displaySettings}
           />
         </div>
+
         <div
           className="lower-search"
           style={{
-            minHeight: "35vh",
-            height: "40vh",
+            minHeight: "40vh",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-evenly",
             backgroundColor: "black",
             color: "white",
-            paddingTop: "30px",
+            paddingTop: "3px",
             boxSizing: "border-box",
             overflowY: "auto",
           }}
@@ -977,6 +974,7 @@ function App() {
           coolDown={coolDown}
           disableLoadMore={data.every((artist) => artist.pages <= page)}
           loadMore={loadMore}
+          active={activeSearch !== ""}
         />
       </div>
     </>

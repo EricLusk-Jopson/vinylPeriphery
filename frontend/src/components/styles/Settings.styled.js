@@ -18,6 +18,7 @@ export const StyledButton = styled.div`
   font-size: max(2.5vw - 3px, 25px - 3px);
   transform-origin: left bottom;
   transform: rotate(-90deg) translateY(100%);
+  font-family: "Bebas Neue";
 
   :hover {
     text-decoration: underline;
@@ -65,6 +66,7 @@ export const StyledOptionsContainer = styled.div`
   flex-direction: column;
   overflow-y: auto; /* Enable vertical scrolling if content overflows */
   padding: 10px; /* Adjust padding as needed */
+  font-family: "Arial";
 `;
 
 export const StyledSettingGroup = styled.div`

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { ResultCard } from "./ResultCard";
+import { useEffect } from "react";
 
 const Results = ({
   data,
@@ -7,7 +8,23 @@ const Results = ({
   message,
   disableLoadMore,
   loadMore,
+  active,
 }) => {
+  const [openCards, setOpenCards] = useState([]);
+
+  const toggleCard = (index) => {
+    setOpenCards((prevOpenCards) => {
+      const isOpen = prevOpenCards.includes(index);
+      return isOpen
+        ? prevOpenCards.filter((i) => i !== index)
+        : [...prevOpenCards, index];
+    });
+  };
+
+  useEffect(() => {
+    setOpenCards([]);
+  }, [active]);
+
   return (
     <div
       className="results"
@@ -58,7 +75,9 @@ const Results = ({
             ratio={Math.round(
               (100 * release.contributors.length) / data.length
             )}
-          ></ResultCard>
+            isOpen={openCards.includes(i)}
+            toggleCard={() => toggleCard(i)}
+          />
         ))}
       </div>
     </div>
