@@ -9,7 +9,7 @@ export const StyledLoadingBarWrapper = styled.div`
 
 export const StyledLoadingBar = styled.div`
   background-color: black;
-  color: white;
+  color: #aaa;
   font-weight: bolder;
   flex-grow: 1;
   margin: 0 3%;
@@ -25,15 +25,15 @@ export const StyledLoadingBar = styled.div`
 
 const colorChange = keyframes`
 0% {
-    color: white;
+    color: #aaa;
   }
 
 50% {
-    color: red;
+    color: #CA231F
   }
 
 100% {
-    color: white;
+    color: #aaa;
   }
 `;
 
@@ -45,5 +45,5 @@ export const StyledLetter = styled.p`
   margin: 0;
   ${(props) => props.isLoading && anim}
 
-  ${(props) => props.isComplete && "color: red;"}
+  ${(props) => props.isComplete && "color: #CA231F"}
 `;

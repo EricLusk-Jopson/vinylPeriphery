@@ -7,7 +7,7 @@
 /* Works on Firefox */
 * {
   scrollbar-width: none;
-  scrollbar-color: black red;
+  scrollbar-color: black #ca231f;
 }
 
 /* Works on Chrome, Edge, and Safari */
@@ -25,7 +25,7 @@
 *::-webkit-scrollbar-thumb {
   background-color: white;
   border-radius: 0px;
-  border: 1px solid red;
+  border: 1px solid #ca231f;
 }
 
 body {

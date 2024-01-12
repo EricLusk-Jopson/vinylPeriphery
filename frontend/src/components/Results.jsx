@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ResultCard } from "./ResultCard";
-import { useEffect } from "react";
 
 const Results = ({
   data,
@@ -11,6 +10,7 @@ const Results = ({
   active,
 }) => {
   const [openCards, setOpenCards] = useState([]);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 500);
 
   const toggleCard = (index) => {
     setOpenCards((prevOpenCards) => {
@@ -24,6 +24,20 @@ const Results = ({
   useEffect(() => {
     setOpenCards([]);
   }, [active]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 500);
+    };
+
+    // Listen for window resize events
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <div
@@ -39,7 +53,7 @@ const Results = ({
     >
       <div
         style={{
-          width: "70%",
+          width: isMobileView ? "95vw" : "70%", // Adjusted width based on isMobileView
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

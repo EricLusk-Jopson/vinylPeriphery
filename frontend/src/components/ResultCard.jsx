@@ -23,10 +23,11 @@ export const ResultCard = ({
 
   return (
     <StyledResultCard>
-      <StyledHeader onClick={toggleCard}>
+      <StyledHeader onClick={toggleCard} isOpen={isOpen}>
         <h4>{title}</h4>
-        <Icon>{isOpen ? <FaCaretUp /> : <FaCaretDown />}</Icon>
+        <br />
         <h4>{`${ratio}%`}</h4>
+        <Icon>{isOpen ? <FaCaretUp /> : <FaCaretDown />}</Icon>
         <h5>{`By: ${formattedArtist(artist)}`}</h5>
       </StyledHeader>
       {isOpen && (

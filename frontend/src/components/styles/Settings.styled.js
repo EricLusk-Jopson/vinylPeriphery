@@ -6,7 +6,7 @@ export const ButtonWrapper = styled.div`
   right: 0;
   padding: 0;
   z-index: 11;
-  color: white;
+  color: #fff;
   height: 30vh;
   width: 10%;
 `;
@@ -28,16 +28,16 @@ export const StyledButton = styled.div`
 export const StyledSelect = styled.select`
   border: 2px solid black;
   border-radius: 2px;
-  background-color: red;
+  background-color: #ca231f;
   color: black;
 `;
 
 export const StyledOption = styled.option`
-  background-color: red;
+  background-color: #ca231f;
   color: black;
 
   :hover {
-    background-color: white;
+    background-color: #fff;
     color: black;
   }
 `;
@@ -47,7 +47,7 @@ export const StyledSettings = styled.div`
   min-width: 250px;
   width: 25vw;
   height: 80vh;
-  background-color: red;
+  background-color: #ca231f;
   top: -35vh;
   right: 10%;
   transform-origin: 100% calc(43.75% + max(25px, 2.5vw));

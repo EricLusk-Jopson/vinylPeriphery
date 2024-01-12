@@ -7,8 +7,8 @@ export const StyledContent = styled.div`
   background-size: 200% 200%;
   background-image: linear-gradient(
     to top right,
-    red 50%,
-    ${(props) => (props.disabled ? "gray" : "white")} 50%
+    #ca231f 50%,
+    ${(props) => (props.disabled ? "gray" : "#aaa")} 50%
   );
   background-repeat: no-repeat;
   background-position: ${(props) => (props.active ? "0 100%" : "100% 0")};
@@ -17,7 +17,7 @@ export const StyledContent = styled.div`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  color: ${(props) => (props.disabled ? "gray" : "white")};
+  color: ${(props) => (props.disabled ? "gray" : "#aaa")};
 
   h1.blocky-title {
     font-size: 2em; /* Adjust the size as needed */
@@ -25,7 +25,7 @@ export const StyledContent = styled.div`
     text-transform: uppercase;
     display: inline-block;
     letter-spacing: 4px; /* Adjust the spacing as needed */
-    outline: 2px solid white; /* Adjust the outline properties as needed */
+    outline: 2px solid #aaa; /* Adjust the outline properties as needed */
     padding: 0.5em; /* Adjust the padding as needed */
 
     &.bebas-neue {
@@ -41,15 +41,15 @@ export const StlyedSearchButton = styled.button`
   font-weight: bold;
   text-transform: uppercase;
   border: 2px solid
-    ${(props) => (props.active ? "red" : props.disabled ? "gray" : "white")};
+    ${(props) => (props.active ? "#CA231F" : props.disabled ? "gray" : "#aaa")};
   background-color: black;
   color: ${(props) =>
-    props.active ? "red" : props.disabled ? "gray" : "white"};
+    props.active ? "#CA231F" : props.disabled ? "gray" : "#aaa"};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   transition: background-color 0.3s, border-color 0.3s, color 0.3s;
 
   :hover {
-    color: ${(props) => (props.disabled ? "gray" : "red")};
-    border-color: ${(props) => (props.disabled ? "gray" : "red")};
+    color: ${(props) => (props.disabled ? "gray" : "#CA231F")};
+    border-color: ${(props) => (props.disabled ? "gray" : "#CA231F")};
   }
 `;

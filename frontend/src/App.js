@@ -796,7 +796,7 @@ function App() {
         <div
           className="upper-search"
           style={{
-            backgroundColor: "white",
+            backgroundColor: "#111",
             position: "relative",
             height: "50vh",
             display: "flex",
