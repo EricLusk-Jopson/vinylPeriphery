@@ -803,6 +803,7 @@ function App() {
             flexDirection: "row",
           }}
         >
+          <MediaQuery minWidth={501}>
           <StyledLoadingBarWrapper className="progress-block">
             <LoadingBar
               isLoading={loadingStates.connect.isLoading}
@@ -830,12 +831,13 @@ function App() {
               text="RECORDS"
             />
           </StyledLoadingBarWrapper>
+          </MediaQuery>
           <div
             className="input-block"
             style={{
-              width: "60vw",
               display: "flex",
               flexDirection: "column-reverse",
+              flexGrow: 1,
               alignItems: "center",
               justifyContent: "end",
               marginBottom: "60px",
@@ -862,6 +864,8 @@ function App() {
             toggleSettingsModal={toggleSettingsModal}
             displaySettings={displaySettings}
           />
+          
+          
         </div>
 
         <div
