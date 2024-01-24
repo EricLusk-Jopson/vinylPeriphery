@@ -5,8 +5,6 @@ const Results = ({
   data,
   displayResults,
   message,
-  disableLoadMore,
-  loadMore,
   active,
 }) => {
   const [openCards, setOpenCards] = useState([]);
@@ -68,12 +66,11 @@ const Results = ({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            color: "white",
+            color: "#ccc",
           }}
         >
           {message}
         </div>
-        {/* {!disableLoadMore && <button onClick={loadMore}>Load More</button>} */}
         {displayResults.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}
