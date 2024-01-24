@@ -25,7 +25,6 @@ export const StyledContent = styled.div`
     text-transform: uppercase;
     display: inline-block;
     letter-spacing: 4px; /* Adjust the spacing as needed */
-    outline: 2px solid #aaa; /* Adjust the outline properties as needed */
     padding: 0.5em; /* Adjust the padding as needed */
 
     &.bebas-neue {

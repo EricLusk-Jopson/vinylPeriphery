@@ -8,7 +8,7 @@ import {
   createArtistRecord,
   fetchAndWait,
 } from "./helpers/asyncCalls";
-import { callLimit } from "./helpers/magicNumbers";
+import { callLimit, mobileScreenWidth } from "./helpers/magicNumbers";
 import LoadingBar from "./components/LoadingBar";
 import { StyledLoadingBarWrapper } from "./components/styles/LoadingBar.styled";
 import { StyledInput } from "./components/styles/Input";
@@ -17,6 +17,7 @@ import Settings from "./components/Settings";
 import Results from "./components/Results";
 import { CoolDownTimer } from "./components/styles/CoolDownTimer.styled";
 import { getPages } from "./helpers/getPages";
+import { artistSearchCopy, creditSearchCopy, memberSearchCopy } from "./helpers/magicStrings";
 
 function App() {
   const [data, setData] = useState([]);
@@ -28,7 +29,6 @@ function App() {
     excludeAlbum: "true",
     excludeVarious: "false",
     excludeSolo: "false",
-    excludeProduction: "false",
     searchSpeeds: {
       fast: 100,
       comprehensive: 3200,
@@ -40,20 +40,6 @@ function App() {
       "translated",
       "assemblage",
       "manager",
-    ],
-    productionRoles: [
-      "a&r",
-      "audio",
-      "record",
-      "mixed",
-      "master",
-      "produced",
-      "production",
-      "assistant",
-      "creative",
-      "director",
-      "lacquer cut",
-      "engineer",
     ],
   });
   const [loadingStates, setLoadingStates] = useState({
@@ -505,10 +491,6 @@ function App() {
           .split(",")
           .map((element) => element.trim());
         const exclusions = [...settings.excludedRoles];
-        if (settings.excludeProduction) {
-          exclusions.push(...settings.productionRoles);
-        }
-
         if (newRoles.length > 0) {
           for (let i = 0; i < newRoles.length; i++) {
             for (let j = 0; j < exclusions.length; j++) {
@@ -748,21 +730,21 @@ function App() {
   const cards = [
     {
       title: "Artist",
-      body: "Returns a collection of all releases associated with the band/artist. This is the fastest available search and typically yields the smallest set of results.",
+      body: artistSearchCopy,
       btnFnc: bandReleases,
       active: activeSearch === "band",
       disabled: (activeSearch !== "" && activeSearch !== "band") || coolDown,
     },
     {
       title: "Members",
-      body: "Returns a collection of all releases from each of the band's members. This search may take longer for large and/or long-running groups.",
+      body: memberSearchCopy,
       btnFnc: memberReleases,
       active: activeSearch === "member",
       disabled: (activeSearch !== "" && activeSearch !== "member") || coolDown,
     },
     {
       title: "Credits",
-      body: "Returns all releases associated with the record's credited artists, including session musicians. This search may take over a minute to perform.",
+      body: creditSearchCopy,
       btnFnc: contributorReleases,
       active: activeSearch === "contributor",
       disabled:
@@ -803,6 +785,7 @@ function App() {
             flexDirection: "row",
           }}
         >
+          <MediaQuery minWidth={mobileScreenWidth}>
           <StyledLoadingBarWrapper className="progress-block">
             <LoadingBar
               isLoading={loadingStates.connect.isLoading}
@@ -830,12 +813,13 @@ function App() {
               text="RECORDS"
             />
           </StyledLoadingBarWrapper>
+          </MediaQuery>
           <div
             className="input-block"
             style={{
-              width: "60vw",
               display: "flex",
               flexDirection: "column-reverse",
+              flexGrow: 1,
               alignItems: "center",
               justifyContent: "end",
               marginBottom: "60px",
@@ -862,6 +846,8 @@ function App() {
             toggleSettingsModal={toggleSettingsModal}
             displaySettings={displaySettings}
           />
+          
+          
         </div>
 
         <div
@@ -878,7 +864,7 @@ function App() {
             overflowY: "auto",
           }}
         >
-          <MediaQuery maxWidth={500}>
+          <MediaQuery maxWidth={mobileScreenWidth}>
             <div
               style={{
                 display: "flex",
@@ -931,13 +917,10 @@ function App() {
             </div>
           </MediaQuery>
 
-          {/* Render normally for screens above 500px */}
-          <MediaQuery minWidth={501}>
+          <MediaQuery minWidth={mobileScreenWidth + 1}>
             <SearchCard
               title="Artist"
-              body="Returns a collection of all releases associated with the
-                band/artist. This is the fastest available search and typically
-                yields the smallest set of results."
+              body={artistSearchCopy}
               btnFnc={bandReleases}
               active={activeSearch === "band"}
               disabled={
@@ -946,9 +929,7 @@ function App() {
             />
             <SearchCard
               title="Members"
-              body="Returns a collection of all releases from each of the band's
-            members. This search may take longer for large and/or long-running
-            groups."
+              body={memberSearchCopy}
               btnFnc={memberReleases}
               active={activeSearch === "member"}
               disabled={
@@ -957,9 +938,7 @@ function App() {
             />
             <SearchCard
               title="Credits"
-              body="Returns all releases associated with the record's credited
-            artists, including session musicians. This search may take over a
-            minute to perform."
+              body={creditSearchCopy}
               btnFnc={contributorReleases}
               active={activeSearch === "contributor"}
               disabled={

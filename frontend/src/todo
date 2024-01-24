@@ -1,9 +1,3 @@
-add handling for failed searches on backend AND frontend (in UI)
-
-look into pulling album art and content links - use the musicbrainz api for search, then ID lookup - use the musicbrainz api for retrieving cover art - include a ghost image for cover art that fails to load
-spotify is an option for this. Look into other options.
-
-look into AWS for backend hosting
 
 add typescript support
 
