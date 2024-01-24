@@ -849,11 +849,10 @@ function App() {
           
           
         </div>
-
         <div
           className="lower-search"
           style={{
-            minHeight: "40vh",
+            minHeight: "50vh",
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-evenly",
