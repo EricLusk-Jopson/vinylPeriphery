@@ -30,6 +30,17 @@ const Settings = ({
             <StyledOption value="comprehensive">Comprehensive</StyledOption>
           </StyledSelect>
         </StyledSettingGroup>
+        <StyledSettingGroup>
+          <label>Exclude Production Staff</label>
+          <StyledSelect
+            name="excludeProduction"
+            value={settings.excludeProduction}
+            onChange={handleSettingsChange}
+          >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
         <hr />
         <h3>Result Filters</h3>
         <StyledSettingGroup>

@@ -29,6 +29,7 @@ function App() {
     excludeAlbum: "true",
     excludeVarious: "false",
     excludeSolo: "false",
+    excludeProduction: "false",
     searchSpeeds: {
       fast: 100,
       comprehensive: 3200,
@@ -40,6 +41,20 @@ function App() {
       "translated",
       "assemblage",
       "manager",
+    ],
+    productionRoles: [
+      "a&r",
+      "audio",
+      "record",
+      "mixed",
+      "master",
+      "produced",
+      "production",
+      "assistant",
+      "creative",
+      "director",
+      "lacquer cut",
+      "engineer",
     ],
   });
   const [loadingStates, setLoadingStates] = useState({
@@ -491,6 +506,9 @@ function App() {
           .split(",")
           .map((element) => element.trim());
         const exclusions = [...settings.excludedRoles];
+        if (settings.excludeProduction) {
+          exclusions.push(...settings.productionRoles);
+        }
         if (newRoles.length > 0) {
           for (let i = 0; i < newRoles.length; i++) {
             for (let j = 0; j < exclusions.length; j++) {
