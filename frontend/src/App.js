@@ -435,6 +435,7 @@ function App() {
       resetSearch("Please enter a band and album");
       return;
     }
+
     const searchFlag = settings.searchType === "fast" ? true : false;
     setActiveSearch("contributor");
     let temp = {
@@ -444,6 +445,7 @@ function App() {
       credits: { isLoading: false, isComplete: false },
       records: { isLoading: false, isComplete: false },
     };
+    
     setLoadingStates(temp);
     setMessage("Searching for album...");
     let callCount = 1;
