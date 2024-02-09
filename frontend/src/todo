@@ -5,7 +5,3 @@ retrieving the given release record.
 improve url appending
 
 add typescript support
-
-change queries to useQuery with react-queries
-
-add form validation with yup
