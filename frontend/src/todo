@@ -1,10 +1,11 @@
+the first 70 lines of each search function are the same.
+these should be abstracted into a new method responsible for
+retrieving the given release record.
+
+improve url appending
 
 add typescript support
 
 change queries to useQuery with react-queries
 
 add form validation with yup
-
-add form control with formik
-
-add jest testing for api calls and rendering components

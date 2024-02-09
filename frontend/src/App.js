@@ -168,7 +168,8 @@ function App() {
     // initialize artist counter for reporting purposes
     let artistInc = 1;
     for (const artist of releaseResult.artists) {
-      // from here, there are two new queries to be made. If our callCounter is within two calls of the limit, we abort.
+      // from here, there are two new queries to be made.
+      // If our callCounter is within two calls of the limit, we abort.
       if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
         setMessage("call limit exceeded. Terminating search...");
         break;
@@ -178,7 +179,7 @@ function App() {
       let artistResult;
       let artistReleasesResult;
 
-      // attempt to retrieve the current artist's info. if none, or if error, continue tonnext iteration of the loop.
+      // attempt to retrieve the current artist's info. if none, or if error, continue to next iteration of the loop.
       try {
         setMessage(
           `searching for artist ${artist.name} (${artistInc} / ${releaseResult.artists.length})...`
@@ -250,162 +251,224 @@ function App() {
       return;
     }
 
+    // initialize variables and defaults
+    let projectResult;
+    let releaseResult;
+
     setActiveSearch("member");
     updateLoadingStates({
       ...getDefaultLoadingStates(),
       connect: { isLoading: true, isComplete: false },
     });
     setMessage("Searching for album...");
+
+    // try to get the searchResult from form inputs. Reset search on HTTP error or no results
     try {
-      const response = await getSearchResult(band, album);
-      if (response.results.length <= 0) {
+      projectResult = await getSearchResult(band, album);
+      if (projectResult.results.length <= 0) {
         resetSearch("No release was found using the provided band and album");
         return;
       }
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-      );
-      setMessage("Album located");
-      setMessage("Retrieving album info...");
-      const release = await fetchAndWait(
-        response.results[0].resource_url,
+    } catch (error) {
+      console.error(`Error in getSearchResult: ${error}`);
+      resetSearch("Could not connect to the database.");
+      return;
+    }
+
+    // search succeeded: project was located. Wait the appropriate amount of time to obey rate limits
+    setMessage("Album located");
+
+    await new Promise((resolve) =>
+      setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+    );
+
+    // move on to next step in the search
+    setMessage("Retrieving album info...");
+
+    // attempt to retrieve futher information the first match returned by the project search
+    // on success, this will provide us with a specific release's information
+    try {
+      releaseResult = await fetchAndWait(
+        projectResult.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
-      updateLoadingStates({
-        connect: { isLoading: false, isComplete: true },
-        members: { isLoading: true, isComplete: false },
-        records: { isLoading: true, isComplete: false },
-      });
-      let callCount = 2;
-      setMessage(
-        `Checking releases associated with ${release.artists.length} artist${
-          release.artists.length > 1 && "s"
-        }.`
-      );
-      let currentCount = callCount;
-      const output = [];
-      let artistInc = 1;
-      // for every artist recorded in the response
-      for (const artist of release.artists) {
-        if (settings.searchType === "fast" && currentCount >= callLimit) break;
+    } catch (error) {
+      console.error(`Error in fetchAndWait on release: ${error}`);
+      resetSearch("No album info could be retrieved.");
+      return;
+    }
+
+    // successfully restrieved a valid release
+    updateLoadingStates({
+      connect: { isLoading: false, isComplete: true },
+      members: { isLoading: true, isComplete: false },
+    });
+    setMessage(
+      `Checking releases associated with ${
+        releaseResult.artists.length
+      } artist${releaseResult.artists.length > 1 && "s"}.`
+    );
+
+    // initialize the callcounter, which helps us obey rate limits when fast search is enabled
+    let callCount = 2;
+    let currentCount = callCount;
+
+    const output = [];
+    updateLoadingStates({ records: { isLoading: true, isComplete: false } });
+
+    // for each artist associated with the release, attempt to fetch their discography
+    // initialize artist counter for reporting purposes
+    let artistInc = 1;
+    for (const artist of releaseResult.artists) {
+      // from here, there are at least three new queries to be made.
+      // if our callCounter is within three calls of the limit, we abort.
+      if (settings.searchType === "fast" && currentCount >= callLimit - 3) {
+        setMessage("call limit exceeded. Terminating search...");
+        break;
+      }
+
+      // attempt our query
+      let artistResult;
+
+      // attempt to retrieve the current artist's info. if none, or if error, continue tonnext iteration of the loop.
+      try {
         setMessage(
-          `searching for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+          `searching for artist ${artist.name} (${artistInc} / ${releaseResult.artists.length})...`
         );
+        artistResult = await fetchAndWait(
+          artist.resource_url,
+          settings.searchSpeeds[settings.searchType]
+        );
+        currentCount++;
+      } catch (error) {
+        console.error(`Error: ${error}`);
+        resetSearch(
+          `an error was encountered fetching artist records for ${artist.name}.`
+        );
+        continue;
+      }
 
-        try {
-          // fetch their information and count++
-          const artistResponse = await fetchAndWait(
-            artist.resource_url,
-            settings.searchSpeeds[settings.searchType]
-          );
-          currentCount++;
+      // attempt to retrieve the current artist's members.
+      if (artistResult.hasOwnProperty("members")) {
+        // for each member associated with the artist, attempt to fetch their discography
+        // initialize member counter for reporting purposes
+        let memberInc = 1;
+        for (const member of artistResult.members) {
+          // from here, there are two new queries to be made.
+          // If our callCounter is within two calls of the limit, we abort.
+          if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+            setMessage("call limit exceeded. Terminating search...");
+            break;
+          }
 
-          // determine if they have members
-          if (artistResponse.hasOwnProperty("members")) {
-            // for each member in the band
-            let memberInc = 1;
-            for (const member of artistResponse.members) {
-              if (
-                settings.searchType === "fast" &&
-                currentCount >= callLimit - 2
-              ) {
-                setMessage("call limit exceeded. Terminating search...");
-                break;
-              }
+          // attempt our two queries
+          let memberResult;
+          let memberReleasesResult;
 
-              try {
-                // fetch their information and count++
-                setMessage(
-                  `searching for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
-                );
-                const memberResponse = await fetchAndWait(
-                  member.resource_url,
-                  settings.searchSpeeds[settings.searchType]
-                );
-                currentCount++;
-
-                // fetch their releases and count++
-                setMessage(
-                  `fetching releases for member ${member.name} of ${artist.name} (${memberInc} / ${artistResponse.members?.length})...`
-                );
-                const memberReleasesResponse = await fetchAndWait(
-                  `https://api.discogs.com/artists/${memberResponse.id}/releases?page=1&per_page=100`,
-                  settings.searchSpeeds[settings.searchType]
-                );
-                currentCount++;
-
-                // Check that the member release response is properly formatted
-                if (
-                  memberReleasesResponse &&
-                  memberReleasesResponse.releases &&
-                  memberReleasesResponse.pagination
-                ) {
-                  // Create a new artist with the member information and add it to the output
-                  const newArtist = createArtistRecord(
-                    memberResponse.name,
-                    memberResponse.id,
-                    memberReleasesResponse.releases,
-                    memberResponse.roles ?? [""]
-                  );
-                  output.push(newArtist);
-                }
-              } catch (error) {
-                console.error(
-                  `Error fetching ${member.resource_url}: ${error}`
-                );
-                resetSearch("");
-              }
-              memberInc++;
-            }
-          } else {
-            // The artist has no members, so we must add the artist
-
-            // fetch their releases and count++
+          // attempt to retrieve the current member's info. if none, or if error, continue to next iteration of the loop.
+          try {
             setMessage(
-              `fetching releases for artist ${artist.name} (${artistInc} / ${release.artists.length})...`
+              `searching for member ${member.name} of ${artist.name} (${memberInc} / ${artistResult.members?.length})...`
             );
-            const artistReleasesResponse = await fetchAndWait(
-              `https://api.discogs.com/artists/${artistResponse.id}/releases?page=1&per_page=100`,
+            memberResult = await fetchAndWait(
+              member.resource_url,
               settings.searchSpeeds[settings.searchType]
             );
             currentCount++;
-
-            if (
-              artistReleasesResponse &&
-              artistReleasesResponse.releases &&
-              artistReleasesResponse.pagination
-            ) {
-              const newArtist = createArtistRecord(
-                artist.name,
-                artist.id,
-                artistReleasesResponse.releases,
-                artist.roles ?? [""]
-              );
-              output.push(newArtist);
-            }
+          } catch (error) {
+            console.error(`Error: ${error}`);
+            resetSearch(
+              `an error was encountered fetching member records for ${member.name}.`
+            );
+            continue;
           }
-        } catch (error) {
-          resetSearch(
-            "an error was encountered fetching artists. Please try again"
-          );
-          console.error(`Error: ${error}`);
+
+          // attempt to retrieve the current artist's releases. if none, or if error, continue to next iteration of the loop.
+          try {
+            setMessage(
+              `fetching releases for member ${member.name} of ${artist.name} (${memberInc} / ${artistResult.members?.length})...`
+            );
+            memberReleasesResult = await fetchAndWait(
+              `https://api.discogs.com/artists/${memberResult.id}/releases?page=1&per_page=100`,
+              settings.searchSpeeds[settings.searchType]
+            );
+            currentCount++;
+          } catch (error) {
+            console.error(`Error: ${error}`);
+            resetSearch(
+              `an error was encountered fetching member's releases records for ${member.name}.`
+            );
+            continue;
+          }
+
+          // successfully retrieved the current artist's member's releases
+          // create new artist object from the retrieved information and push it to the output array
+          if (memberReleasesResult && memberReleasesResult.releases) {
+            const newArtist = createArtistRecord(
+              memberResult.name,
+              memberResult.id,
+              memberReleasesResult.releases,
+              memberResult.roles ?? [""]
+            );
+            output.push(newArtist);
+          }
+
+          memberInc++;
         }
-        artistInc++;
+        updateLoadingStates({
+          members: { isLoading: false, isComplete: true },
+          records: { isLoading: false, isComplete: true },
+        });
+      } else {
+        // The artist has no members, so we must add the artist
+        let artistReleasesResult;
+
+        // attempt to retrieve the current artist's releases. if none, or if error, continue tonnext iteration of the loop.
+        try {
+          setMessage(
+            `fetching releases for artist ${artist.name} (${artistInc} / ${releaseResult.artists.length})...`
+          );
+          artistReleasesResult = await fetchAndWait(
+            `https://api.discogs.com/artists/${artistResult.id}/releases?page=1&per_page=100`,
+            settings.searchSpeeds[settings.searchType]
+          );
+          currentCount++;
+        } catch (error) {
+          console.error(`Error: ${error}`);
+          resetSearch(
+            `an error was encountered fetching artist's releases records for ${artist.name}.`
+          );
+          continue;
+        }
+
+        // successfully retrieved the current artist's releases
+        // create new artist object from the retrieved information and push it to the output array
+        if (artistReleasesResult && artistReleasesResult.releases) {
+          const newArtist = createArtistRecord(
+            artist.name,
+            artist.id,
+            artistReleasesResult.releases,
+            artist.roles ?? [""]
+          );
+          output.push(newArtist);
+        }
       }
+
+      // update, increment artist counter and end the loop
       updateLoadingStates({
         members: { isLoading: false, isComplete: true },
         records: { isLoading: false, isComplete: true },
       });
-      setData(output);
-      if (settings.searchType === "fast") {
-        setCooldown(true);
-      }
-      resetSearch("");
-    } catch (error) {
-      resetSearch(
-        "an error was encountered while connecting. Please try again"
-      );
+      artistInc++;
     }
+
+    // loop completed, set data and begin the cooldown if searchType was fast
+    setData(output);
+    if (settings.searchType === "fast") {
+      setCooldown(true);
+    }
+    resetSearch("");
+    return;
   };
 
   const contributorReleases = async () => {
