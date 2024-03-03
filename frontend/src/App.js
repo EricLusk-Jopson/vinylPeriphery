@@ -23,14 +23,25 @@ import {
 } from "./helpers/magicStrings";
 import { convertStringToBoolean } from "./helpers/convertStringToBoolean";
 import { getDefaultLoadingStates } from "./helpers/defaults";
+import {
+  StyledApp,
+  StyledInputBlock,
+  StyledLowerSearch,
+  StyledSearchCarousel,
+  StyledUpperSeach,
+} from "./components/styles/App.styled";
+import { IconButtonStyles } from "./components/styles/MuiStyles";
 
 function App() {
-  const [data, setData] = useState([]);
-  const [displayResults, setDisplayResults] = useState([]);
+  const [artistData, setArtistData] = useState([]);
+  const [releasesData, setReleasesData] = useState([]);
+  const [rolesData, setRolesData] = useState([]);
   const [displaySettings, setDisplaySettings] = useState(false);
   const [settings, setSettings] = useState({
     searchType: "fast",
-    excludeProduction: "false",
+    excludeProduction: "true",
+    excludeCorporate: "true",
+    excludeOtherMedia: "true",
     excludeArtist: "true",
     excludeAlbum: "true",
     excludeVarious: "false",
@@ -39,27 +50,33 @@ function App() {
       fast: 100,
       comprehensive: 3200,
     },
-    excludedRoles: [
-      "art",
-      "photo",
-      "coordinator",
-      "translated",
-      "assemblage",
-      "manager",
-    ],
+    displayRoles: "false",
+    corporateRoles: ["assemblage", "coordinator", "manager", "translated"],
     productionRoles: [
       "a&r",
-      "audio",
-      "record",
-      "mixed",
-      "master",
-      "produced",
-      "production",
       "assistant",
-      "creative",
-      "director",
-      "lacquer cut",
+      "audio",
+      "design",
       "engineer",
+      "lacquer cut by",
+      "mastered by",
+      "mixed by",
+      "producer",
+      "produced by",
+      "production",
+      "programmed by",
+      "record",
+      "recorded by",
+      "technician",
+    ],
+    otherMediaRoles: [
+      "art",
+      "art direction",
+      "artwork",
+      "creative director",
+      "design",
+      "performer",
+      "photo",
     ],
   });
   const [loadingStates, setLoadingStates] = useState(getDefaultLoadingStates());
@@ -104,6 +121,7 @@ function App() {
     let releaseResult;
 
     setActiveSearch("band");
+    setRolesData([]);
     updateLoadingStates({
       ...getDefaultLoadingStates(),
       connect: { isLoading: true, isComplete: false },
@@ -222,7 +240,7 @@ function App() {
           artist.name,
           artist.id,
           artistReleasesResult.releases,
-          artist.roles ?? [""]
+          artist.roles ?? []
         );
         output.push(newArtist);
       }
@@ -236,7 +254,7 @@ function App() {
     }
 
     // loop completed, set data and begin the cooldown if searchType was fast
-    setData(output);
+    setArtistData(output);
     if (settings.searchType === "fast") {
       setCooldown(true);
     }
@@ -254,8 +272,10 @@ function App() {
     // initialize variables and defaults
     let projectResult;
     let releaseResult;
+    let callCount = 0;
 
     setActiveSearch("member");
+    setRolesData([]);
     updateLoadingStates({
       ...getDefaultLoadingStates(),
       connect: { isLoading: true, isComplete: false },
@@ -277,7 +297,7 @@ function App() {
 
     // search succeeded: project was located. Wait the appropriate amount of time to obey rate limits
     setMessage("Album located");
-
+    callCount++;
     await new Promise((resolve) =>
       setTimeout(resolve, settings.searchSpeeds[settings.searchType])
     );
@@ -292,6 +312,7 @@ function App() {
         projectResult.results[0].resource_url,
         settings.searchSpeeds[settings.searchType]
       );
+      callCount++;
     } catch (error) {
       console.error(`Error in fetchAndWait on release: ${error}`);
       resetSearch("No album info could be retrieved.");
@@ -309,10 +330,6 @@ function App() {
       } artist${releaseResult.artists.length > 1 && "s"}.`
     );
 
-    // initialize the callcounter, which helps us obey rate limits when fast search is enabled
-    let callCount = 2;
-    let currentCount = callCount;
-
     const output = [];
     updateLoadingStates({ records: { isLoading: true, isComplete: false } });
 
@@ -322,7 +339,7 @@ function App() {
     for (const artist of releaseResult.artists) {
       // from here, there are at least three new queries to be made.
       // if our callCounter is within three calls of the limit, we abort.
-      if (settings.searchType === "fast" && currentCount >= callLimit - 3) {
+      if (settings.searchType === "fast" && callCount >= callLimit - 3) {
         setMessage("call limit exceeded. Terminating search...");
         break;
       }
@@ -339,7 +356,7 @@ function App() {
           artist.resource_url,
           settings.searchSpeeds[settings.searchType]
         );
-        currentCount++;
+        callCount++;
       } catch (error) {
         console.error(`Error: ${error}`);
         resetSearch(
@@ -356,7 +373,7 @@ function App() {
         for (const member of artistResult.members) {
           // from here, there are two new queries to be made.
           // If our callCounter is within two calls of the limit, we abort.
-          if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
+          if (settings.searchType === "fast" && callCount >= callLimit - 2) {
             setMessage("call limit exceeded. Terminating search...");
             break;
           }
@@ -374,7 +391,7 @@ function App() {
               member.resource_url,
               settings.searchSpeeds[settings.searchType]
             );
-            currentCount++;
+            callCount++;
           } catch (error) {
             console.error(`Error: ${error}`);
             resetSearch(
@@ -392,7 +409,7 @@ function App() {
               `https://api.discogs.com/artists/${memberResult.id}/releases?page=1&per_page=100`,
               settings.searchSpeeds[settings.searchType]
             );
-            currentCount++;
+            callCount++;
           } catch (error) {
             console.error(`Error: ${error}`);
             resetSearch(
@@ -408,7 +425,7 @@ function App() {
               memberResult.name,
               memberResult.id,
               memberReleasesResult.releases,
-              memberResult.roles ?? [""]
+              memberResult.roles ?? []
             );
             output.push(newArtist);
           }
@@ -432,7 +449,7 @@ function App() {
             `https://api.discogs.com/artists/${artistResult.id}/releases?page=1&per_page=100`,
             settings.searchSpeeds[settings.searchType]
           );
-          currentCount++;
+          callCount++;
         } catch (error) {
           console.error(`Error: ${error}`);
           resetSearch(
@@ -448,22 +465,22 @@ function App() {
             artist.name,
             artist.id,
             artistReleasesResult.releases,
-            artist.roles ?? [""]
+            artist.roles ?? []
           );
           output.push(newArtist);
         }
       }
 
-      // update, increment artist counter and end the loop
-      updateLoadingStates({
-        members: { isLoading: false, isComplete: true },
-        records: { isLoading: false, isComplete: true },
-      });
       artistInc++;
     }
 
+    updateLoadingStates({
+      members: { isLoading: false, isComplete: true },
+      records: { isLoading: false, isComplete: true },
+    });
+
     // loop completed, set data and begin the cooldown if searchType was fast
-    setData(output);
+    setArtistData(output);
     if (settings.searchType === "fast") {
       setCooldown(true);
     }
@@ -472,165 +489,217 @@ function App() {
   };
 
   const contributorReleases = async () => {
+    // Guard clause for empty form
     if (band === "" || album === "") {
       resetSearch("Please enter a band and album");
       return;
     }
 
-    const searchFlag = settings.searchType === "fast" ? true : false;
+    // initialize variables and defaults
+    let projectResult;
+    let callCount = 0;
+
     setActiveSearch("contributor");
     updateLoadingStates({
       ...getDefaultLoadingStates(),
       connect: { isLoading: true, isComplete: false },
     });
     setMessage("Searching for album...");
-    let callCount = 1;
+
+    // try to get the searchResult from form inputs. Reset search on HTTP error or no results
     try {
-      const response = await getSearchResult(band, album);
-      if (response.results.length <= 0) {
+      projectResult = await getSearchResult(band, album);
+      if (projectResult.results.length <= 0) {
         resetSearch("No release was found using the provided band and album");
         return;
       }
-      await new Promise((resolve) =>
-        setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-      );
-      let release = { extraartists: [] };
+    } catch (error) {
+      console.error(`Error in getSearchResult: ${error}`);
+      resetSearch("Could not connect to the database.");
+      return;
+    }
 
-      for (let i = 0; i < Math.min(5, response.results.length); i++) {
-        setMessage(`Checking for credited artists on result ${i + 1}`);
-        const nextRelease = await fetch(response.results[i].resource_url).then(
-          (res) => res.json()
+    // search succeeded: project was located. Wait the appropriate amount of time to obey rate limits
+    setMessage("Album located");
+    callCount++;
+    await new Promise((resolve) =>
+      setTimeout(resolve, settings.searchSpeeds[settings.searchType])
+    );
+
+    // move on to next step in the search
+    setMessage("Selecting optimal record for contributor search...");
+
+    let release = { extraartists: [] };
+
+    // check up to five releases for the one with the most contributors
+    for (let i = 0; i < Math.min(5, projectResult.results.length); i++) {
+      setMessage(`Checking for credited artists on result ${i + 1}`);
+
+      const nextRelease = await fetchAndWait(
+        projectResult.results[i].resource_url,
+        settings.searchSpeeds[settings.searchType]
+      );
+      callCount++;
+      if (
+        nextRelease.extraartists &&
+        nextRelease.extraartists.length >= release.extraartists.length
+      ) {
+        release = nextRelease;
+      }
+    }
+
+    // confirm that we have a list of contributors
+    if (!release.extraartists || release.extraartists.length === 0) {
+      resetSearch("No contributors were listed in any of the records found.");
+      return;
+    }
+
+    // success! we have a list of contributing artists
+    setMessage(
+      `Checking releases associated with ${
+        release.extraartists.length
+      } contributor${release.extraartists.length > 1 && "s"}.`
+    );
+    updateLoadingStates({
+      connect: { isLoading: false, isComplete: true },
+      credits: { isLoading: true, isComplete: false },
+      records: { isLoading: true, isComplete: false },
+    });
+
+    // initialize the output array
+    const output = [];
+
+    // form a collection of relevant contributors and their roles
+    const contributors = new Map();
+
+    // some artists may be recorded multiple times as a contributor
+    // here we are making sure that all roles will be recorded under one entry
+    release.extraartists.forEach((extraArtist) => {
+      // check if the extra artist has alredy been recorded with roles
+      const oldRoles = contributors.has(extraArtist.id)
+        ? [...contributors.get(extraArtist.id).roles]
+        : [];
+
+      // record only the new roles in this extra artist entry
+      const newRoles = extraArtist.role
+        .split(",")
+        .map((role) => role.replace(/\[[^\]]*\]/g, "").trim())
+        .filter((trimmedRole) => !oldRoles.includes(trimmedRole))
+        .filter(
+          (trimmedRole) =>
+            !settings.excludeProduction ||
+            !settings.productionRoles.includes(trimmedRole.toLowerCase())
+        )
+        .filter(
+          (trimmedRole) =>
+            !settings.excludeCorporate ||
+            !settings.corporateRoles.includes(trimmedRole.toLowerCase())
+        )
+        .filter(
+          (trimmedRole) =>
+            !settings.excludeOtherMedia ||
+            !settings.otherMediaRoles.includes(trimmedRole.toLowerCase())
+        );
+
+      // update the contributor if there are new roles
+      if (newRoles.length > 0) {
+        contributors.set(extraArtist.id, {
+          id: extraArtist.id,
+          name: extraArtist.name,
+          link: extraArtist.resource_url,
+          roles: [...oldRoles, ...newRoles],
+        });
+      }
+    });
+
+    const allRoles = new Set();
+
+    // for each contributor
+    let contributorInc = 1;
+    for (const contributor of [...contributors.values()]) {
+      // obey call limits
+      if (settings.searchType === "fast" && callCount >= callLimit - 2) {
+        setMessage("Too many API calls. Aborting...");
+        break;
+      }
+
+      setMessage(
+        `Checking contributor ${contributorInc} of ${contributors.size}.`
+      );
+
+      let contributorResponse;
+      // attempt to look up the current contributor
+      try {
+        contributorResponse = await fetchAndWait(
+          contributor.link,
+          settings.searchSpeeds[settings.searchType]
         );
         callCount++;
-        await new Promise((resolve) =>
-          setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-        );
-
-        if (
-          nextRelease.extraartists &&
-          nextRelease.extraartists.length >= release.extraartists.length
-        ) {
-          release = nextRelease;
-        }
+      } catch (error) {
+        resetSearch("an error occurred while fetching contributors");
+        break;
       }
+
+      // we successfully found our contributor
       setMessage(
-        `Checking releases associated with ${
-          release.extraartists.length
-        } contributor${release.extraartists.length > 1 && "s"}.`
+        `fetching releases for contributor ${contributorInc} of ${contributors.size}.`
       );
-      let currentCount = callCount;
-      const output = [];
 
-      if (!release.extraartists || release.extraartists.length === 0) {
-        resetSearch(
-          "Couldn't locate a list of credited artists for this album :("
+      let contributorReleasesResponse;
+      try {
+        contributorReleasesResponse = await fetchAndWait(
+          `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`,
+          settings.searchSpeeds[settings.searchType]
         );
-        return [];
+        callCount++;
+      } catch (error) {
+        resetSearch(
+          `an error occurred while fetching releases for contributor ${contributorInc}`
+        );
+        break;
       }
-      updateLoadingStates({
-        connect: { isLoading: false, isComplete: true },
-        credits: { isLoading: true, isComplete: false },
-        records: { isLoading: true, isComplete: false },
-      });
-      // form a collection of relevant contributors and their roles
-      const contributors = new Map();
-      release.extraartists.forEach((extraArtist) => {
-        const oldRoles = contributors.has(extraArtist.id)
-          ? [...contributors.get(extraArtist.id).roles]
-          : [];
-        const newRoles = extraArtist.role
-          .split(",")
-          .map((element) => element.trim());
-        const exclusions = [...settings.excludedRoles];
-        if (settings.excludeProduction) {
-          exclusions.push(...settings.productionRoles);
-        }
-        if (newRoles.length > 0) {
-          for (let i = 0; i < newRoles.length; i++) {
-            for (let j = 0; j < exclusions.length; j++) {
-              if (newRoles[i].toLowerCase().includes(exclusions[j])) {
-                newRoles.splice(i, 1);
-                i--;
-                break;
-              }
-            }
-          }
-          if (newRoles.length > 0) {
-            contributors.set(extraArtist.id, {
-              id: extraArtist.id,
-              name: extraArtist.name,
-              link: extraArtist.resource_url,
-              roles: [...oldRoles, ...newRoles],
-            });
-          }
-        }
-      });
 
-      // for each contributor
-      let contributorInc = 1;
-      for (const contributor of [...contributors.values()]) {
-        if (settings.searchType === "fast" && currentCount >= callLimit - 2) {
-          setMessage("Too many API calls. Aborting...");
-          break;
-        }
-        try {
-          // fetch their information
-          setMessage(
-            `Checking contributor ${contributorInc} of ${contributors.size}.`
-          );
-          const contributorResponse = await fetch(contributor.link).then(
-            (res) => res.json()
-          );
-          currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
+      // Check that the contributor release response is properly formatted
+      if (contributorReleasesResponse && contributorReleasesResponse.releases) {
+        // Create a new artist with the contributor information and add it to the output
 
-          // fetch their releases and count++
-          setMessage(
-            `fetching releases for contributor ${contributorInc} of ${contributors.size}.`
-          );
-          const contributorReleasesResponse = await fetch(
-            `https://api.discogs.com/artists/${contributorResponse.id}/releases?page=1&per_page=100`
-          ).then((res) => res.json());
-          currentCount++;
-          await new Promise((resolve) =>
-            setTimeout(resolve, settings.searchSpeeds[settings.searchType])
-          );
+        const newArtist = createArtistRecord(
+          contributor.name,
+          contributor.id,
+          contributorReleasesResponse.releases,
+          contributor.roles ?? []
+        );
 
-          // Check that the contributor release response is properly formatted
-          if (
-            contributorReleasesResponse &&
-            contributorReleasesResponse.releases &&
-            contributorReleasesResponse.pagination
-          ) {
-            // Create a new artist with the contributor information and add it to the output
-            const newArtist = createArtistRecord(
-              contributor.name,
-              contributor.id,
-              contributorReleasesResponse.releases,
-              contributor.roles ?? [""]
-            );
-            output.push(newArtist);
-          }
-        } catch (error) {
-          resetSearch("an error occurred while fetching contributors");
-          break;
+        // save the artist to output and save their roles in the allRoles set
+        output.push(newArtist);
+        if (contributor.roles && contributor.roles.length > 0) {
+          contributor.roles.forEach((role) => {
+            allRoles.add(role);
+          });
         }
-        contributorInc++;
       }
-      updateLoadingStates({
-        credits: { isLoading: false, isComplete: true },
-        records: { isLoading: false, isComplete: true },
-      });
-      setData(output);
-      if (searchFlag) {
-        setCooldown(true);
-      }
-      resetSearch("");
-    } catch (error) {
-      resetSearch("An error occurred while connecting.");
+
+      contributorInc++;
     }
+
+    updateLoadingStates({
+      credits: { isLoading: false, isComplete: true },
+      records: { isLoading: false, isComplete: true },
+    });
+
+    // successfully retrieved all possible contributor information for the record
+    // set the list of artists and unique roles
+    setArtistData(output);
+    setRolesData(
+      [...allRoles].map((role) => {
+        return { role: role, selected: true };
+      })
+    );
+    if (settings.searchType === "fast") {
+      setCooldown(true);
+    }
+    resetSearch("");
+    return;
   };
 
   const toggleSettingsModal = async () => {
@@ -643,74 +712,50 @@ function App() {
     setSettings({ ...settings, [e.target.name]: e.target.value });
   };
 
-  useEffect(() => {
-    setMessage(`displaying ${displayResults.length} records`);
-  }, [displayResults]);
+  const getRoleByName = (roleName, roles) =>
+    roles.find((role) => role.role === roleName);
 
-  useEffect(() => {
-    const displayReleases = new Map();
-    data.forEach((artist) => {
-      artist.releases.forEach((release) => {
-        const id = release.main_release ? release.main_release : release.id;
-        const contributors = [];
-        if (displayReleases.has(id)) {
-          contributors.push(...displayReleases.get(id).contributors);
-        }
-        if (
-          !contributors.some((contributor) => contributor.name === artist.name)
-        ) {
-          contributors.push({ name: artist.name, roles: artist.roles });
-        }
-        displayReleases.set(id, {
-          artist: release.artist,
-          title: release.title,
-          year: release.year,
-          contributors: contributors,
-        });
-      });
-    });
-    let filteredReleases = [...displayReleases.values()];
-    if (convertStringToBoolean(settings.excludeArtist)) {
-      filteredReleases = filteredReleases.filter(
-        (release) => release.artist.toLowerCase() !== band.toLowerCase()
-      );
-    }
-    if (convertStringToBoolean(settings.excludeAlbum)) {
-      filteredReleases = filteredReleases.filter(
-        (release) => release.title.toLowerCase() !== album.toLowerCase()
-      );
-    }
-    if (convertStringToBoolean(settings.excludeVarious)) {
-      filteredReleases = filteredReleases.filter(
-        (release) => release.artist.toLowerCase() !== "various"
-      );
-    }
-    if (convertStringToBoolean(settings.excludeSolo)) {
-      filteredReleases = filteredReleases.filter(
-        (release) => release.contributors.length > 1
-      );
-    }
+  const hasNoSelectedRole = (artist, roles) => {
+    return (
+      artist.roles.length > 0 &&
+      artist.roles.every((role) => !getRoleByName(role, roles)?.selected)
+    );
+  };
 
-    setDisplayResults(
-      filteredReleases.sort(
-        (a, b) => b.contributors.length - a.contributors.length
+  const handleSelectArtist = (id) => {
+    setArtistData((prevArtists) =>
+      prevArtists.map((artist) =>
+        artist.id === id
+          ? {
+              ...artist,
+              selected: !artist.selected,
+            }
+          : artist
       )
     );
-  }, [data, settings]);
+  };
 
-  useEffect(() => {
-    async function coolDownAfterFastSearch() {
-      if (coolDown) {
-        await new Promise(() =>
-          setTimeout(() => {
-            setCooldown(false);
-            updateLoadingStates({ ...getDefaultLoadingStates() });
-          }, 60000)
-        );
-      }
-    }
-    coolDownAfterFastSearch();
-  }, [coolDown]);
+  const handleSelectRole = (roleName) => {
+    setRolesData((prevRoles) => {
+      const updatedRoles = prevRoles.map((role) =>
+        role.role === roleName ? { ...role, selected: !role.selected } : role
+      );
+
+      setArtistData((prevArtists) => {
+        return prevArtists.map((artist) => {
+          if (artist.roles.includes(roleName)) {
+            return {
+              ...artist,
+              disabled: hasNoSelectedRole(artist, updatedRoles),
+            };
+          }
+          return artist;
+        });
+      });
+
+      return updatedRoles;
+    });
+  };
 
   // Code related to the traversal of search options on smaller viewports
   const cards = [
@@ -750,27 +795,126 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    setMessage(`displaying ${releasesData.length} records`);
+  }, [releasesData]);
+
+  useEffect(() => {
+    const displayReleases = new Map();
+    const hasSelectedRoles = (artist) =>
+      artist.roles.some(
+        (role) => rolesData.find((element) => element.role === role)?.selected
+      );
+    // for each valid artist in the data
+    // valid artist must be selected
+    // valid artist must have at least one selected role if their roles array is non-empty
+    console.log(
+      artistData,
+      artistData.filter(
+        (artist) =>
+          artist.selected &&
+          (artist.roles.length === 0 || hasSelectedRoles(artist))
+      )
+    );
+
+    artistData
+      .filter(
+        (artist) =>
+          artist.selected &&
+          (artist.roles.length === 0 || hasSelectedRoles(artist))
+      )
+      .forEach((artist) => {
+        // then for each release on each artist
+        artist.releases.forEach((release) => {
+          // get the release id and record all of its contributors in an array
+          const id = release.main_release ? release.main_release : release.id;
+          const contributors = [];
+          // retrieve the current contributors list as edited by other iterations
+          // of artists and releases
+          if (displayReleases.has(id)) {
+            contributors.push(...displayReleases.get(id).contributors);
+          }
+
+          // add the current artist as a contributor to the record,
+          // so long as they haven't already been added
+          if (
+            !contributors.some(
+              (contributor) => contributor.name === artist.name
+            )
+          ) {
+            // push only their roles which are selected
+            contributors.push({
+              name: artist.name,
+              roles: artist.roles.filter(
+                (artistRole) =>
+                  rolesData.find((role) => role.role === artistRole)
+                    ?.selected === true
+              ),
+            });
+          }
+
+          // save the album with its contributors to the display realeases map
+          displayReleases.set(id, {
+            artist: release.artist,
+            title: release.title,
+            year: release.year,
+            contributors: contributors,
+          });
+        });
+      });
+
+    let filteredReleases = [...displayReleases.values()];
+    if (convertStringToBoolean(settings.excludeArtist)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.artist.toLowerCase() !== band.toLowerCase()
+      );
+    }
+
+    if (convertStringToBoolean(settings.excludeAlbum)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.title.toLowerCase() !== album.toLowerCase()
+      );
+    }
+
+    if (convertStringToBoolean(settings.excludeVarious)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.artist.toLowerCase() !== "various"
+      );
+    }
+
+    if (convertStringToBoolean(settings.excludeSolo)) {
+      filteredReleases = filteredReleases.filter(
+        (release) => release.contributors.length > 1
+      );
+    }
+
+    setReleasesData(
+      filteredReleases.sort(
+        (a, b) => b.contributors.length - a.contributors.length
+      )
+    );
+  }, [artistData, rolesData, settings]);
+
+  useEffect(() => {
+    async function coolDownAfterFastSearch() {
+      if (coolDown) {
+        await new Promise(() =>
+          setTimeout(() => {
+            setCooldown(false);
+            updateLoadingStates({ ...getDefaultLoadingStates() });
+          }, 60000)
+        );
+      }
+    }
+    coolDownAfterFastSearch();
+  }, [coolDown]);
+
+  console.log(artistData, releasesData, rolesData);
+
   return (
     <>
-      <div
-        className="app"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          overflowX: "hidden",
-          fontFamily: "Monda",
-        }}
-      >
-        <div
-          className="upper-search"
-          style={{
-            backgroundColor: "#111",
-            position: "relative",
-            height: "50vh",
-            display: "flex",
-            flexDirection: "row",
-          }}
-        >
+      <StyledApp>
+        <StyledUpperSeach>
           <MediaQuery minWidth={mobileScreenWidth}>
             <StyledLoadingBarWrapper className="progress-block">
               <LoadingBar
@@ -800,17 +944,7 @@ function App() {
               />
             </StyledLoadingBarWrapper>
           </MediaQuery>
-          <div
-            className="input-block"
-            style={{
-              display: "flex",
-              flexDirection: "column-reverse",
-              flexGrow: 1,
-              alignItems: "center",
-              justifyContent: "end",
-              marginBottom: "60px",
-            }}
-          >
+          <StyledInputBlock>
             <StyledInput
               text="Album"
               placeholder="Album"
@@ -825,49 +959,18 @@ function App() {
               name="band"
               value={band}
             ></StyledInput>
-          </div>
+          </StyledInputBlock>
           <Settings
             settings={settings}
             handleSettingsChange={handleSettingsChange}
             toggleSettingsModal={toggleSettingsModal}
             displaySettings={displaySettings}
           />
-        </div>
-        <div
-          className="lower-search"
-          style={{
-            minHeight: "50vh",
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-evenly",
-            backgroundColor: "black",
-            color: "white",
-            paddingTop: "3px",
-            boxSizing: "border-box",
-            overflowY: "auto",
-          }}
-        >
+        </StyledUpperSeach>
+        <StyledLowerSearch>
           <MediaQuery maxWidth={mobileScreenWidth}>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                textAlign: "center",
-                width: "100%",
-              }}
-            >
-              <IconButton
-                onClick={handlePrev}
-                style={{
-                  color: "inherit",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+            <StyledSearchCarousel>
+              <IconButton onClick={handlePrev} style={IconButtonStyles}>
                 <NavigateBefore />
               </IconButton>
               {cards.map((card, index) => (
@@ -884,20 +987,10 @@ function App() {
                   />
                 </div>
               ))}
-              <IconButton
-                onClick={handleNext}
-                style={{
-                  color: "inherit",
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+              <IconButton onClick={handleNext} style={IconButtonStyles}>
                 <NavigateNext />
               </IconButton>
-            </div>
+            </StyledSearchCarousel>
           </MediaQuery>
 
           <MediaQuery minWidth={mobileScreenWidth + 1}>
@@ -930,15 +1023,24 @@ function App() {
               }
             />
           </MediaQuery>
-        </div>
+        </StyledLowerSearch>
         <CoolDownTimer coolDown={coolDown} />
         <Results
-          data={data}
-          displayResults={displayResults}
+          artists={artistData}
+          roles={rolesData}
+          numArtists={
+            artistData.filter(
+              (artist) => artist.selected === true && artist.disabled === false
+            ).length
+          }
+          releasesData={releasesData}
           message={message}
           active={activeSearch !== ""}
+          handleSelectArtist={handleSelectArtist}
+          handleSelectRole={handleSelectRole}
+          settings={settings}
         />
-      </div>
+      </StyledApp>
     </>
   );
 }

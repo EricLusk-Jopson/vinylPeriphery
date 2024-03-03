@@ -1,14 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { ResultCard } from "./ResultCard";
+import {
+  StyledMessage,
+  StyledResults,
+  StyledResultsSection,
+  StyledSelector,
+  StyledSelectorContainer,
+} from "./styles/ResultCard.styled";
+import { convertStringToBoolean } from "../helpers/convertStringToBoolean";
+import Tooltip from "./Tooltip";
 
 const Results = ({
-  data,
-  displayResults,
+  artists,
+  roles,
+  numArtists,
+  releasesData,
   message,
   active,
+  handleSelectArtist,
+  handleSelectRole,
+  settings,
 }) => {
   const [openCards, setOpenCards] = useState([]);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 500);
+  console.log(releasesData);
 
   const toggleCard = (index) => {
     setOpenCards((prevOpenCards) => {
@@ -38,40 +53,49 @@ const Results = ({
   }, []);
 
   return (
-    <div
-      className="results"
-      style={{
-        minHeight: "10vh",
-        backgroundColor: "black",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          width: isMobileView ? "95vw" : "70%", // Adjusted width based on isMobileView
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            height: "10vh",
-            fontSize: "1em",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#ccc",
-          }}
-        >
-          {message}
-        </div>
-        {displayResults.map((release, i) => (
+    <StyledResultsSection>
+      <StyledResults isMobileView={isMobileView}>
+        <StyledMessage>{message}</StyledMessage>
+        <StyledSelectorContainer border="left">
+          {artists.map((artist) => (
+            <Tooltip
+              title={
+                !convertStringToBoolean(settings.displayRoles) &&
+                artist.roles.length > 0 &&
+                !artist.disabled &&
+                `${artist.roles.join(", ")}`
+              }
+              sx={{ backgroundColor: "red" }}
+            >
+              <StyledSelector
+                key={artist.id}
+                onClick={() => handleSelectArtist(artist.id)}
+                disabled={artist.disabled}
+                selected={artist.selected}
+              >
+                {artist.name}
+                {convertStringToBoolean(settings.displayRoles) &&
+                  artist.roles.length > 0 &&
+                  artist.selected &&
+                  `(${artist.roles.join(", ")})`}
+              </StyledSelector>
+            </Tooltip>
+          ))}
+        </StyledSelectorContainer>
+        {roles.length > 0 && (
+          <StyledSelectorContainer reverse border="right">
+            {roles.map((role) => (
+              <StyledSelector
+                key={role.role}
+                onClick={() => handleSelectRole(role.role)}
+                selected={role.selected}
+              >
+                {role.role}
+              </StyledSelector>
+            ))}
+          </StyledSelectorContainer>
+        )}
+        {releasesData.map((release, i) => (
           <ResultCard
             key={`resultCard-${i}`}
             title={release.title}
@@ -83,15 +107,13 @@ const Results = ({
                   ? ` (${contributor.roles.join(", ")})`
                   : "")
             )}
-            ratio={Math.round(
-              (100 * release.contributors.length) / data.length
-            )}
+            ratio={Math.round((100 * release.contributors.length) / numArtists)}
             isOpen={openCards.includes(i)}
             toggleCard={() => toggleCard(i)}
           />
         ))}
-      </div>
-    </div>
+      </StyledResults>
+    </StyledResultsSection>
   );
 };
 

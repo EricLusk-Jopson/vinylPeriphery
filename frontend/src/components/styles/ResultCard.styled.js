@@ -1,11 +1,30 @@
 import styled from "styled-components";
 
-export const Results = styled.div`
+export const StyledResultsSection = styled.section`
+  min-height: 10vh;
+  background-color: black;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  width: 90%; /* Full width on mobile */
+`;
+
+export const StyledResults = styled.div`
+  width: ${(props) => (props.isMobileView ? "95vw" : "70%")};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const StyledMessage = styled.div`
+  width: 100%;
+  height: 10vh;
+  font-size: 1em;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
 `;
 
 export const StyledLoadButton = styled.button`
@@ -16,6 +35,54 @@ export const StyledLoadButton = styled.button`
   padding: 0;
   margin: 0px 20px;
   ${(props) => props.disabled && "color: gray;"}
+`;
+
+export const StyledSelectorContainer = styled.div`
+  color: white;
+  display: flex;
+  flex-wrap: wrap;
+  ${(props) => props.reverse && "justify-content: flex-end;"}
+  gap: 15px;
+  border-${(props) => props.border}: 5px solid #210303;
+  margin: 30px;
+  padding: 0px 15px;
+  width: 100%;
+`;
+
+export const StyledSelector = styled.button`
+  font-family: "Monda"
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.7em;
+  border: 2px solid;
+  border-radius: 2px;
+  color: #222;
+  background-color: #120101;
+  border-color: #222;
+  outline: none;
+  cursor: pointer;
+  ${(props) =>
+    props.selected &&
+    `border-color: #851714; 
+     color: #aaa;
+     background-color: #1f0303;
+  `}
+  ${(props) =>
+    props.disabled &&
+    `border-color: #222; 
+     color: #222;
+     background-color: black;
+     cursor: default;
+  `}
+  
+
+  &:hover {
+    ${(props) =>
+      !props.disabled &&
+      `color: #ccc;
+      background-color: #360505;
+    `}
+  }
 `;
 
 export const StyledResultCard = styled.div`

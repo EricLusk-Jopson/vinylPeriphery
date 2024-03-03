@@ -1,5 +1,9 @@
 import React from "react";
-import { StlyedSearchButton, StyledContent } from "./styles/SearchCard.styled";
+import {
+  StlyedSearchButton,
+  StyledContent,
+  StyledSearchCard,
+} from "./styles/SearchCard.styled";
 
 const SearchCard = ({
   title,
@@ -23,16 +27,7 @@ const SearchCard = ({
   };
 
   return (
-    <div
-      className="card"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        padding: "1vw",
-        alignContent: "center",
-        justifyContent: "center",
-      }}
-    >
+    <StyledSearchCard>
       <StyledContent active={active} disabled={disabled}>
         <h1 className="blocky-title bebas-neue">{title}</h1>
         <p>{body}</p>
@@ -46,7 +41,7 @@ const SearchCard = ({
           {btnText}
         </StlyedSearchButton>
       </div>
-    </div>
+    </StyledSearchCard>
   );
 };
 
