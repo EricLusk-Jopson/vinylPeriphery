@@ -1,5 +1,13 @@
 import styled from "styled-components";
 
+export const StyledSearchCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 1vw;
+  align-content: center;
+  justify-content: center;
+`;
+
 export const StyledContent = styled.div`
   display: flex;
   flex-direction: column;

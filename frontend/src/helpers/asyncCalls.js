@@ -1,12 +1,13 @@
 import axios from "axios";
 
-export const createArtistRecord = (name, id, pages, releases, roles) => {
+export const createArtistRecord = (name, id, releases, roles) => {
   return {
-    name: name,
-    id: id,
-    pages: pages,
-    releases: releases,
-    roles: roles,
+    name,
+    id,
+    releases,
+    roles,
+    selected: true,
+    disabled: false,
   };
 };
 

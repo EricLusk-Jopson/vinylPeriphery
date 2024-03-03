@@ -41,6 +41,28 @@ const Settings = ({
             <StyledOption value={false}>No</StyledOption>
           </StyledSelect>
         </StyledSettingGroup>
+        <StyledSettingGroup>
+          <label>Exclude Corporate Staff</label>
+          <StyledSelect
+            name="excludeCorporate"
+            value={settings.excludeCorporate}
+            onChange={handleSettingsChange}
+          >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
+          <label>Exclude Other Media</label>
+          <StyledSelect
+            name="excludeOtherMedia"
+            value={settings.excludeOtherMedia}
+            onChange={handleSettingsChange}
+          >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
         <hr />
         <h3>Result Filters</h3>
         <StyledSettingGroup>
@@ -81,6 +103,17 @@ const Settings = ({
           <StyledSelect
             name="excludeSolo"
             value={settings.excludeSolo}
+            onChange={handleSettingsChange}
+          >
+            <StyledOption value={true}>Yes</StyledOption>
+            <StyledOption value={false}>No</StyledOption>
+          </StyledSelect>
+        </StyledSettingGroup>
+        <StyledSettingGroup>
+          <label>Roles On Contributor Selectors</label>
+          <StyledSelect
+            name="displayRoles"
+            value={settings.displayRoles}
             onChange={handleSettingsChange}
           >
             <StyledOption value={true}>Yes</StyledOption>
